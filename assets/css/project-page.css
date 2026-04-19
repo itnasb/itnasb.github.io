@@ -1,0 +1,98 @@
+/* ===== Project Writeup Blocks (template-friendly) ===== */
+.project-page .project-writeup {
+    max-width: 1020px;
+    margin: 0 auto 18px auto;
+}
+
+    .project-page .project-writeup p {
+        line-height: 1.65;
+    }
+
+.project-page .writeup-block {
+    margin: 14px 0;
+}
+
+.project-page .writeup-title {
+    margin: 0 0 6px 0;
+    font-size: 1.05em;
+    letter-spacing: .02em;
+}
+
+.project-page .writeup-lede {
+    font-size: 1.02em;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.project-page .writeup-hint {
+    opacity: 0.9;
+    margin: 0;
+}
+
+.project-page .writeup-bullets {
+    margin: 8px 0 0 20px;
+}
+
+    .project-page .writeup-bullets li {
+        margin: 6px 0;
+    }
+
+.project-page .callout {
+    border-left: 3px solid #44356e;
+    padding-left: 12px;
+}
+
+.project-page .placeholder {
+    opacity: 0.75;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+.subtitle {
+    display: block;
+    font-size: 0.55em;
+    font-weight: normal;
+    opacity: 0.85;
+    margin-top: 6px;
+}
+
+.writeup-title {
+    border-left: 3px solid #612b54;
+    padding-left: 12px;
+    margin: 24px 0 12px 0;
+    letter-spacing: 0.03em;
+}
+
+.writeup-lede {
+    font-size: 1.05em;
+}
+
+/* Burp-ish orange for keywords */
+.hljs-keyword {
+    color: #eb9d6a;
+    font-weight: 700;
+}
+
+/* YAML keys like "language:", "name:" */
+.hljs-attr {
+    color: #eb9d6a;
+    font-weight: 600;
+}
+
+/* Burp variables like {latest.response.body} */
+.hljs-variable {
+    color: #ebde6a;
+}
+
+/* Optional: keep strings readable */
+.hljs-string {
+    color: #98c379;
+}
+
+.hljs-comment {
+    color: #ffffff;
+}
+
+.hljs-punctuation {
+    color: #ffffff !important;
+}
