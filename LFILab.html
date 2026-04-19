@@ -1,0 +1,321 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+	<title>Crevice Testbed Vulnerable WebApp</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+	<link rel="stylesheet" href="assets/css/main.css?v=2022353s4d8-2" />
+
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+	<!-- highlight.js theme -->
+	<link rel="stylesheet" href="styles/a11y-dark.css" />
+
+	<!-- project css-->
+	<link rel="stylesheet" href="assets/css/project-page.css">
+
+	
+
+</head>
+<body class="is-preload">
+
+	<!-- Header -->
+	<header id="header">
+		<a href="index.html" class="title">[Bernard]</a>
+		<nav>
+			<ul>
+				<li><a href="index.html#one">[Crevice Testbed]</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<section id="main" class="wrapper">
+			<div class="inner project-page">
+
+				<h1 class="major align-center">Constrained Local File Inclusion<span class="subtitle">Chaining Path Traversal into SQL Injection and RCE</span></h1>
+
+				<figure class="project-hero hero-large hero-overlay">
+					<img src="images/LFI1_1.png" alt="Local File Inclusion with constrained file execution lab" />
+					<figcaption style="font-size: 11px">Figure 1: Local File Inclusion with constrained file execution Lab</figcaption>
+				</figure>
+
+				<div class="project-tags visually-hidden">
+					<span class="tag">Application Security</span>
+					<span class="tag">Training</span>
+					<span class="tag">Local File Inclusion</span>
+					<span class="tag">Path Traversal</span>
+					<span class="tag">SQL Injection</span>
+					<span class="tag">Remote Code Execution</span>
+				</div>
+
+				<div class="project-writeup">
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Summary</h2>
+
+						<p class="writeup-lede">
+							This <a href="https://github.com/itnasb/CreviceTestbed">Crevice Testbed</a> lab demonstrates a Local File Inclusion scenario where path traversal is possible, but the application does
+							not return included files directly to the user. Instead, it attempts to execute retrieved files as SQL queries,
+							which limits straightforward file disclosure and forces the tester to analyze how the application uses
+							attacker-controlled input.
+						</p>
+						<p></p>
+						<p>
+							To make the scenario more interesting and educational, the lab expands this constrained file inclusion issue into
+							a full exploitation chain. Students bypass incomplete traversal filtering, use a controlled file upload primitive,
+							leverage legacy Microsoft SQL Server-style UNC path behavior, execute SQL through included files, and ultimately
+							reach operating system command execution through an emulated <code class="inline-code">xp_cmdshell</code> configuration.
+						</p>
+						<p>
+							This lab was inspired by a real-world issue where the original vulnerability appeared fairly limited on its own.
+							However, the application also contained hidden HTML for a file upload feature that appeared to be either incomplete
+							or left behind from an earlier implementation. If that functionality were enabled, the bug would become
+							significantly more dangerous by allowing attacker-controlled files to be included and executed as SQL.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Lab Objectives</h2>
+
+						<ul>
+							<li>Identify and bypass flawed path traversal protections</li>
+							<li>Understand why file inclusion does not always lead to meaningful file disclosure</li>
+							<li>Recognize how constrained vulnerabilities can become exploitable when chained with other weaknesses</li>
+							<li>Use controlled file placement to turn LFI into SQL injection</li>
+							<li>Escalate from SQL execution to operating system command execution</li>
+						</ul>
+					</section>
+
+
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Technical Walkthrough</h2>
+						<p>
+							The application implements the unusual design choice of loading files containing SQL queries via the <strong>filename</strong>
+							URL parameter and executing the contained queries.
+						</p>
+						<figure class="project-hero hero-large hero-overlay">
+							<img src="images/LFI1_15.png" alt="Intended functionality demonstration" />
+							<figcaption style="font-size: 11px">Figure 2: Intended functionality and its results</figcaption>
+						</figure>
+
+						<p>
+							The first step is identifying an incomplete attempt to prevent path traversal, but encoded input is not handled correctly before validation.
+							A simple traversal sequence such as <code class="inline-code">..%2f</code> is detected, but double-encoded traversal such as <code class="inline-code">..%252f..%252f</code>
+							bypasses the filter and is later decoded into a usable path.
+						</p>
+						<p><code class="inline-code">..%2f..%2f..%2fetc/passwd</code> results in: </p>
+
+						<figure class="project-hero hero-large hero-overlay">
+							<img src="images/LFI1_10.png" alt="Incomplete path traversal mitigation demonstration" />
+							<figcaption style="font-size: 11px">Figure 3: Results of the incomplete traversal filter</figcaption>
+						</figure>
+						<p>
+							Once traversal is confirmed, the tester finds that direct file disclosure is limited. Included files are not
+							rendered back to the user as text; they are processed as SQL. This makes common LFI goals less effective and
+							forces the tester to look for a way to control the contents of an included file instead.
+						</p>
+
+
+						<p><code class="inline-code">..%252f..%252fetc/passwd</code> results in: </p>
+						<figure class="project-hero hero-large hero-overlay">
+							<img src="images/LFI1_11.png" alt="Path traversal filter bypass demonstration" />
+							<figcaption style="font-size: 11px">Figure 4: Double URL encoding bypasses the incomplete traversal filter</figcaption>
+						</figure>
+						<p>The error is a good sign a path traversal was successful.</p>
+						<p>Taking it a step further, path traversal is confirmed when the file being read causes a SQL syntax error.</p>
+
+
+						<p><code class="inline-code">..%252f..%252f..%252f..%252f..%252f..%252fetc/passwd</code> results in: </p>
+						<figure class="project-hero hero-large hero-overlay">
+							<img src="images/LFI1_12.png?asdfasd" alt="Initial constrained file inclusion behavior" />
+							<figcaption style="font-size: 11px">Figure 5: Included files are executed as SQL rather than displayed directly</figcaption>
+						</figure>
+
+						<p>
+							To provide an escalation path, the app includes a controlled file upload function presented as
+							a mock SMB share. Functionally, this represents what would happen if the original application's upload capability
+							were exposed. The lab then combines that functionality with legacy Microsoft SQL Server-style UNC path behavior to let
+							students retrieve uploaded files through SQL operations and execute them as queries via the vulnerable path handling logic.
+						</p>
+						<p>
+							The backend database is MariaDB, but the lab emulates Microsoft SQL Server syntax and error
+							handling to encourage the user to use the correct attack methodology to complete the lab rather than using MariaDB-specific syntax.
+						</p>
+
+						<p>
+							The next step is using the application's file upload functionality, presented as a mock SMB share, to perform SQL injection and enumerate the backend.
+							The <i>SMB</i> share emulates legacy Microsoft SQL Server UNC path behavior while giving the tester a predictable location where attacker-supplied
+							content can be stored and executed from.
+						</p>
+
+						<figure class="project-hero hero-large hero-overlay">
+							<img src="images/LFI1_8.png" alt="Enumerating the server version via SQL injection" />
+							<figcaption style="font-size: 11px">Figure 6: Enumerating the server version via SQL injection</figcaption>
+						</figure>
+
+						<p>
+							Similar behavior has historically appeared in
+							operations involving UNC paths and features such as <code class="inline-code">xp_dirtree</code>,
+							<code class="inline-code">OPENROWSET</code>, or <code class="inline-code">BULK INSERT</code>.
+						</p>
+
+						<p>
+							From there, the exploitation chain continues by using the lab's emulated
+							<code class="inline-code">xp_cmdshell</code> functionality. Once SQL execution is achieved, the user enumerates the database and it's configuration
+							to determine if remote code exeution is possible.
+						</p>
+
+						<figure class="project-hero hero-large hero-overlay">
+							<img src="images/LFI1_5.png" alt="Enumerating the server via SQL injection" />
+							<figcaption style="font-size: 11px">Figure 7: Enumerating the service username via SQL injection</figcaption>
+						</figure>
+						<figure class="project-hero hero-large hero-overlay">
+							<img src="images/LFI1_18.png" alt="Placeholder Enumerating the server via SQL injection and xpcmdshell is enabled" />
+							<figcaption style="font-size: 11px">Figure 8: Discovering xpcmdshell is enabled</figcaption>
+						</figure>
+						<p>
+							Because the service is running as the sa user with admin privileges, and xpcmdshell is enabled, operating system commands can be issued,
+							allowing escalation from constrained LFI to remote code execution.
+						</p>
+
+						<figure class="project-hero hero-large hero-overlay">
+							<img src="images/LFI1_16.png" alt="Escalation from SQL execution to operating system command execution" />
+							<figcaption style="font-size: 11px">Figure 9: Executing system commands through the emulated xp_cmdshell path</figcaption>
+						</figure>
+						<p>
+							After starting a Netcat listener via <code class="inline-code">nc -nvlp 4444</code>, reverse shell access is gained on the server.
+						</p>
+						<figure class="project-hero hero-medium hero-overlay">
+							<img src="images/LFI1_17.png" alt="Escalation from SQL execution to operating system command execution to remote shell" />
+							<figcaption style="font-size: 11px">Figure 10: Gaining remote shell access</figcaption>
+						</figure>
+					</section>
+					<section class="writeup-block">
+						<h2 class="writeup-title">The Initial Impact Is Limited</h2>
+
+						<p>
+							The application is vulnerable to path traversal, but its behavior differs from a typical file read scenario.
+							Included files are treated as SQL input rather than returned as raw content. In practice, this means the tester
+							does not get direct access to arbitrary file contents and is usually limited to database errors or fragments of
+							interpreted output.
+						</p>
+
+						<p>
+							This makes the original bug more constrained than a traditional LFI issue. The vulnerability is real, but
+							its impact is not obvious unless the tester considers how file inclusion interacts with the application's backend
+							logic.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">On Arbitrary File Disclosure</h2>
+
+						<p>
+							At a glance, path traversal suggests arbitrary file disclosure. In practice, that is heavily restricted here.
+							An attacker would need to reference files that are known or correctly guessed to exist on the target system.
+							That could be attempted with common filename knowledge or wordlist-based enumeration, but the result is still of
+							limited practical value.
+						</p>
+
+						<p>
+							Because included files are executed as SQL rather than rendered back to the user, file contents are not directly
+							disclosed. Non-SQL content produces parsing errors instead of meaningful output. As a result, file
+							enumeration may still be possible, but direct disclosure remains weak unless the attacker gains control over the
+							file being included.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Key Takeaways</h2>
+
+						<ul>
+							<li>Path traversal does not always result in direct file disclosure</li>
+							<li>Impact depends heavily on how included content is processed by the application</li>
+							<li>Incomplete normalization and decoding logic can make blacklist-based filtering ineffective</li>
+							<li>Seemingly limited vulnerabilities can become critical when combined with file write capabilities</li>
+							<li>Understanding backend behavior is essential for realistic exploit development</li>
+						</ul>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Potential Pitfall</h2>
+
+						<p>
+							It would be easy to dismiss this issue after discovering that included files are not directly readable. The constrained
+							behavior reduces immediate impact, but it does not eliminate the vulnerability or its ability to participate in a
+							more serious exploit chain.
+						</p>
+
+						<p>
+							This lab is designed to reinforce an important application security lesson: vulnerabilities should be evaluated not
+							only in isolation, but also in terms of how they interact with hidden functionality, future features, and backend
+							misconfigurations.
+						</p>
+					</section>
+
+				</div>
+			</div>
+		</section>
+	</div>
+
+	<!-- Footer -->
+	<footer id="footer" class="wrapper style1">
+		<div class="inner">
+			<ul class="menu">
+				<li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+				<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+				<li><a href="index.html#one">[Crevice Testbed]</a></li>
+				<li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
+			</ul>
+		</div>
+	</footer>
+
+	<!--Scripts -->
+	<script src="assets/js/jquery.min.js"></script>
+	<script src="assets/js/jquery.scrollex.min.js"></script>
+	<script src="assets/js/jquery.scrolly.min.js"></script>
+	<script src="assets/js/browser.min.js"></script>
+	<script src="assets/js/breakpoints.min.js"></script>
+	<script src="assets/js/util.js"></script>
+	<script src="assets/js/main.js"></script>
+
+	<!-- highlight.js -->
+	<script src="assets/js/highlight.min.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			if (window.hljs) {
+				if (typeof hljs.highlightAll === 'function') {
+					hljs.highlightAll();
+				} else {
+					document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+				}
+			}
+		});
+	</script>
+	<script>
+		document.querySelectorAll(".ioc-pill").forEach(el => {
+			el.addEventListener("click", () => {
+				navigator.clipboard.writeText(el.innerText);
+
+				el.classList.add("copied");
+
+				setTimeout(() => {
+					el.classList.remove("copied");
+				}, 1200);
+			});
+		});
+	</script>
+	<script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>

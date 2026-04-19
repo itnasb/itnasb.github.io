@@ -1,0 +1,223 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+	<title>Access Control BCheck</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+	<link rel="stylesheet" href="assets/css/main.css?v=202548-2" />
+
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+	<!-- highlight.js theme -->
+	<link rel="stylesheet" href="styles/a11y-dark.css" />
+
+	<!-- project css-->
+	<link rel="stylesheet" href="assets/css/project-page.css">
+
+</head>
+<body class="is-preload">
+
+	<!-- Header -->
+	<header id="header">
+		<a href="index.html" class="title">[Bernard]</a>
+		<nav>
+			<ul>
+				<li><a href="index.html#two">[Application Security]</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<section id="main" class="wrapper">
+			<div class="inner project-page">
+
+				<h1 class="major align-center">Access Control Clues in Client-Side Code<span class="subtitle">A Burp Suite BCheck that flags authorization-related strings in Code to guide manual testing</span></h1>
+
+				<figure class="project-hero hereo-small">
+					<img src="images/accesscontrol.png" alt="Access control illustration" />
+					<figcaption>&copy; Bernard Santillan</figcaption>
+				</figure>
+
+				<!-- Optional hidden tags for crawlers (no visual space) -->
+				<div class="project-tags visually-hidden">
+					<span class="tag">Burp Suite</span>
+					<span class="tag">BCheck</span>
+					<span class="tag">Access Control</span>
+					<span class="tag">Authorization</span>
+					<span class="tag">JavaScript Analysis</span>
+					<span class="tag">Web Security Testing</span>
+				</div>
+
+
+
+				<div class="project-writeup">
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Summary</h2>
+						<p class="writeup-lede">
+							This Burp Suite BCheck was created to streamline my workflow when reviewing client-side JavaScript.The check passively scans JavaScript responses 
+						    for strings that may indicate access control or authorization-related functionality, such as admin, permission, and auth.
+						</p><p></p>
+						<p> 
+						Applications often include dozens or hundreds of JavaScript files, and manually inspecting each one can be time-consuming. This check helps 
+						prioritize files that may contain logic related to administrative functionality or authorization checks, warranting manual review.</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Technical Rationale</h2>
+						<p>
+							During testing, I discovered that an application relied solely on client-side code to enforce authorization while server-side checks were absent. By reviewing the app's' custom 
+							JavaScript, I found administrative logic that relied on client-controlled values to determine privilege levels. Because these checks were not validated by the server, I 
+							was able to modify the values and perform administrative actions while authenticated as a low-privileged user, resulting in a privilege escalation vulnerability.
+						</p>
+						<p>
+						This inspired the creation of the BCheck. During reconnaissance, client-side code often contains references to roles, permissions, or administrative functionality. 
+						By highlighting these indicators automatically, the check helps direct attention to JavaScript files that may contain authorization logic worth reviewing more closely.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Detection Strategy</h2>
+						<p>
+							The BCheck runs passively and inspects responses whose paths end in .js. When a JavaScript file is identified, the response body is searched for several case-insensitive 
+							strings associated with authorization logic:
+						</p>
+						
+						<ul class="writeup-bullets">
+							<li> admin</li>
+							<li> permission</li>
+							<li> auth</li>
+						</ul>
+						<p>
+							If any of these strings appear in the file, the BCheck generates a low-confidence finding indicating that the JavaScript file may contain functionality related to access control. The alert encourages the analyst 
+							to manually inspect the file to determine whether it exposes any weaknesses.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Limitations</h2>
+						<p>
+                           This check intentionally favors simplicity over precision and produces a relatively high number of false positives. Common JavaScript libraries, bundled dependencies, and unrelated variable names can easily contain these strings.
+					       In practice, the most effective way to use this check is to prioritize findings in custom JavaScript files rather than third-party libraries or frameworks.	</p>				
+							<ul class="writeup-bullets">
+								<li>  Other limitations:</li>
+								<li> It relies on simple string matching and does not perform semantic analysis.</li>
+								<li> It cannot detect obfuscated or heavily minified logic.</li>
+								<li> It does not identify vulnerabilities directly—only potential areas of interest.</li>
+							</ul>
+						
+						<p>
+							As a result, this BCheck should be viewed as a triage tool, not a vulnerability detector.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">BCheck Implementation</h2>
+						<p class="writeup-hint">
+							Below is the compact BCheck implementation with inline comments explaining the detection logic.
+						</p>
+					</section>
+				</div>
+
+				<div class="code-card">
+					<pre class="highlight pre-shadow"><code class="bcheck">
+/*
+This BCheck checks client-side scripts for strings that might hint at access control type functionality.
+It will be refined in the future as it has a high rate of false positives. A workaround is to focus only on custom code.
+This will only alert on low hanging fruit + any client side code with even basic obfuscation will thwart this check.
+*/
+
+metadata:
+  language: v2-beta
+  name: "accessControl"
+  description: "Checks for strings contained in JS files that may be related to access control/authorization."
+  author: "Bernard Santillan"
+  tags: "passive"
+	
+
+given path then
+	# if the response is a JavaScript file check for admin, permission, and auth. 
+	if (base.response.url.path) matches "(?i).*\.js" then
+		# only checks the response body as this is meant to drive a check of the application code 
+		# and lots of response headers contain these strings.
+		if (latest.response.body) matches "(?i)admin" then
+			# report and continue checking for the other strings in all files. 
+			# A file can contain all 3 words or none
+			report issue and continue:
+			name: "Check for Potential Access Control Issue"
+			severity: high
+			confidence: tentative
+			detail: `The JavaScript file found at (base.response.url.path) contains the string "admin". Check the code to determine if it contains any access control issues.`
+		end if
+
+		if (latest.response.body) matches "(?i)permission" then
+			report issue and continue:
+			name: "Check for Potential Access Control Issue"
+			severity: high
+			confidence: tentative
+			detail: `The JavaScript file found at (base.response.url.path) contains the string "permission". Check the code to determine if it contains any access control issues.`
+		end if
+
+		if (latest.response.body) matches "(?i)auth" then
+			report issue and continue:
+			name: "Check for Potential Access Control Issue"
+			severity: high
+			confidence: tentative
+			detail: `The JavaScript file found at (base.response.url.path) contains the string "auth". Check the code to determine if it contains any access control issues.`
+		end if
+	end if
+</code></pre>
+
+				</div>
+			</div>
+
+		</section>
+
+
+	</div>
+
+	<!-- Footer -->
+	<footer id="footer" class="wrapper style1">
+		<div class="inner">
+			<ul class="menu">
+				<li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+				<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+				<li><a href="index.html#two">[Application Security]</a></li>
+			</ul>
+		</div>
+	</footer>
+
+	<!-- Scripts -->
+	<script src="assets/js/jquery.min.js"></script>
+	<script src="assets/js/jquery.scrollex.min.js"></script>
+	<script src="assets/js/jquery.scrolly.min.js"></script>
+	<script src="assets/js/browser.min.js"></script>
+	<script src="assets/js/breakpoints.min.js"></script>
+	<script src="assets/js/util.js"></script>
+	<script src="assets/js/main.js"></script>
+
+	<!-- highlight.js -->
+	<script src="assets/js/highlight.min.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			if (window.hljs) {
+				if (typeof hljs.highlightAll === 'function') {
+					hljs.highlightAll();
+				} else {
+					document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+				}
+			}
+		});
+	</script>
+	<script src="assets/js/custom-hljs.js?asdfa1234"></script>
+</body>
+</html>

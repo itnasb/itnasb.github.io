@@ -1,0 +1,303 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+	<title>Hashcat Emulation in Python</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+	<link rel="stylesheet" href="assets/css/main.css?v=20254-2" />
+
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+	<!-- highlight.js theme -->
+	<link rel="stylesheet" href="styles/a11y-dark.css" />
+
+	<!-- project css-->
+	<link rel="stylesheet" href="assets/css/project-page.css">
+</head>
+<body class="is-preload">
+
+	<!-- Header -->
+	<header id="header">
+		<a href="index.html" class="title">[Bernard]</a>
+		<nav>
+			<ul>
+				<li><a href="index.html#four">[Security Tooling]</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<section id="main" class="wrapper">
+			<div class="inner project-page">
+				<h1 class="major align-center">Automating Nuclear Compliance Documentation</h1>
+				<figure class="project-hero hero-medium hero-overlay">
+					<img src="images/compliance.jpg" style="max-width:600px;" />
+					<figcaption> &copy; No rights reserved. Image created by Google's Gemini.</figcaption>
+				</figure>
+				<!-- Optional hidden tags for crawlers (no visual space) -->
+				<div class="project-tags visually-hidden">
+					<span class="tag">Visual Basic for Applications</span>
+					<span class="tag">VBA</span>
+					<span class="tag">Automation</span>
+					<span class="tag">Regulatory Documentation</span>
+				</div>
+				<div class="project-writeup">
+					<section class="writeup-block">
+						<h2 class="writeup-title">Summary</h2>
+						<p class="writeup-lede">
+							This VBA script automates the creation of narrative responses by analyzing values across two spreadsheets and assembling standardized text
+							in a results worksheet. It evaluates category indicators in a reference table, groups related rows by identifier, and generates a natural-language
+							paragraph in a column on the second spreadsheet for inclusion in a regulator submission.
+						</p><p></p>
+						<p>
+							The goal of the automation was to reduce repetitive manual review and drafting work. By mapping category codes to predefined response templates,
+							the macro could generate consistent narrative summaries while still flagging cases that required human input.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">How It Works</h2>
+						<p>
+							The macro processes rows from a reference worksheet and compares values across columns to determine how each item should be summarized. Records
+							are grouped by a shared identifier so that multiple rows related to the same item can be evaluated together rather than handled independently.
+						</p>
+						<p>
+							For each group, the script scans the category column for specific letter indicators and records their presence in an internal array. After the
+							scan is complete, it evaluates the combination of indicators and builds a response paragraph by concatenating predefined text segments. The generated
+							text is then written to the corresponding row in the results worksheet along with the associated item identifier. Single-row entries are processed
+							immediately, while grouped entries are aggregated and evaluated together to produce the final output.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Limitations in This Version</h2>
+						<p>
+							This code reflects an approximate rewrite of early code prior to final debugging and refinement. One issue is that the loop logic can skip evaluating
+							the last row in a grouped set, which can result in incomplete processing. The script also relies on a large number of repetitive conditional branches,
+							making the logic harder to maintain and increasing the chance of redundant or inconsistent output.
+						</p>
+						<p>
+							A helper function used in later revisions is also absent here. As a result, the generated paragraphs were not always grammatically polished and required
+							someone to review the finished document and improve the wording manually.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Later Improvements</h2>
+						<p>
+							Later revisions corrected the row-handling bug, reduced redundant conditional logic, and improved the quality of the generated language. Additional code
+							was added to make the workflow more reliable, easier to maintain, and less dependent on manual cleanup after the spreadsheet was produced.
+						</p>
+					</section>
+				</div>
+				<div class="code-card">
+					<pre class="highlight pre-shadow"><code class="language-vbnet">
+'This VBA macro reviews rows in a source worksheet, groups related entries by a shared identifier,
+'and writes standardized summary text to an output worksheet based on category flags that appear
+'in the source data.
+'
+'This is anillustrative rewrite inspired by an earlier automation script. It
+'has been intentionally generalized and does not include later improvements such as helper functions,
+'edge-case fixes, de-duplication of repeated logic, or text-polishing refinements.
+'
+'Known limitations in this version:
+' one grouped row can be skipped because of loop handling
+' some output combinations are repetitive or grammatically rough
+' a helper routine used in later revisions is not included
+
+Sub BuildSummaryText()
+
+Dim FirstRow As Long
+Dim LastRow As Long
+Dim SourceSheet As String
+Dim OutputSheet As String
+
+Dim FlagPass As Integer
+Dim FlagWarn As Integer
+Dim FlagReview1 As Integer
+Dim FlagReview2 As Integer
+
+Dim statusTextPrimary As String
+Dim statusTextSecondary As String
+Dim reviewText1 As String
+Dim reviewText2 As String
+Dim extraText As String
+Dim statusParagraphPrimary As String
+Dim statusParagraphSecondary As String
+Dim flagArray(3)
+
+statusParagraphPrimary = vbNewLine & "Primary summary paragraph placeholder"
+statusParagraphSecondary = vbNewLine & "Secondary summary paragraph placeholder"
+
+statusTextPrimary = "Primary status applies"
+statusTextSecondary = "Secondary status applies"
+reviewText1 = " REVIEW TYPE 1 PRESENT: MANUAL CHECK REQUIRED"
+reviewText2 = " REVIEW TYPE 2 PRESENT: MANUAL CHECK REQUIRED"
+extraText = " supplemental placeholder text"
+
+Dim summaryNote As String
+Dim summaryCell As String
+comma = ","
+sSpace = " "
+
+SourceSheet = "SourceData"
+OutputSheet = "OutputData"
+FirstRow = 2
+LastRow = Worksheets(SourceSheet).Cells(Worksheets(SourceSheet).Rows.Count, "A").End(xlUp).Row
+
+Worksheets(SourceSheet).Activate
+ActiveSheet.Range("A1:K7641").Sort Key1:=Range("H1"), Order1:=xlAscending, Header:=xlYes
+
+Dim t As Long
+
+For t = FirstRow To LastRow
+
+If Worksheets(SourceSheet).Cells(t, 8) <> Worksheets(SourceSheet).Cells(t + 1, 8) And Worksheets(SourceSheet).Cells(t, 2) <> "" Then
+    'Single-row group
+    If InStr(Worksheets(SourceSheet).Cells(t, 9), "A") Or InStr(Worksheets(SourceSheet).Cells(t, 9), "C") Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextPrimary & statusParagraphPrimary
+        Worksheets(OutputSheet).Cells(t, 1) = Worksheets(SourceSheet).Cells(t, 8)
+
+    ElseIf InStr(Worksheets(SourceSheet).Cells(t, 9), "B") Or InStr(Worksheets(SourceSheet).Cells(t, 9), "D") Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextSecondary & statusParagraphSecondary
+        Worksheets(OutputSheet).Cells(t, 1) = Worksheets(SourceSheet).Cells(t, 8)
+
+    ElseIf Worksheets(SourceSheet).Cells(t, 9) = "E" Then
+        Worksheets(OutputSheet).Cells(t, 6) = reviewText1
+        Worksheets(OutputSheet).Cells(t, 1) = Worksheets(SourceSheet).Cells(t, 8)
+
+    ElseIf Worksheets(SourceSheet).Cells(t, 9) = "I" Then
+        Worksheets(OutputSheet).Cells(t, 6) = reviewText2
+        Worksheets(OutputSheet).Cells(t, 1) = Worksheets(SourceSheet).Cells(t, 8)
+    End If
+
+Else
+    'Multi-row group
+    flagArray(0) = "Z"
+    flagArray(1) = "Z"
+    flagArray(2) = "Z"
+    flagArray(3) = "Z"
+
+    Do While Worksheets(SourceSheet).Cells(t, 8) = Worksheets(SourceSheet).Cells(t + 1, 8) And Worksheets(SourceSheet).Cells(t, 2) <> ""
+
+        If InStr(Worksheets(SourceSheet).Cells(t, 9), "A") Or InStr(Worksheets(SourceSheet).Cells(t, 9), "C") Then
+            flagArray(0) = "A"
+
+        ElseIf InStr(Worksheets(SourceSheet).Cells(t, 9), "B") Or InStr(Worksheets(SourceSheet).Cells(t, 9), "D") Then
+            flagArray(1) = "B"
+
+        ElseIf InStr(Worksheets(SourceSheet).Cells(t, 9), "E") Then
+            flagArray(2) = "E"
+
+        ElseIf InStr(Worksheets(SourceSheet).Cells(t, 9), "I") Then
+            flagArray(3) = "I"
+        End If
+
+        t = t + 1
+        'Known issue: final matching row in a group is not fully evaluated here.
+
+    Loop
+
+    Worksheets(OutputSheet).Cells(t, 1) = Worksheets(SourceSheet).Cells(t, 8)
+
+    If flagArray(0) = "A" And flagArray(1) = "Z" And flagArray(2) = "Z" And flagArray(3) = "Z" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextPrimary & statusParagraphPrimary
+
+    ElseIf flagArray(0) = "A" And flagArray(1) = "B" And flagArray(2) = "Z" And flagArray(3) = "Z" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextPrimary & statusParagraphPrimary & vbNewLine & statusTextSecondary & statusParagraphSecondary
+
+    ElseIf flagArray(0) = "A" And flagArray(1) = "B" And flagArray(2) = "E" And flagArray(3) = "Z" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextPrimary & statusParagraphPrimary & vbNewLine & statusTextSecondary & statusParagraphSecondary & vbNewLine & reviewText1
+
+    ElseIf flagArray(0) = "A" And flagArray(1) = "B" And flagArray(2) = "E" And flagArray(3) = "I" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextPrimary & statusParagraphPrimary & vbNewLine & statusTextSecondary & statusParagraphSecondary & vbNewLine & reviewText1 & vbNewLine & reviewText2
+
+    ElseIf flagArray(0) = "A" And flagArray(1) = "B" And flagArray(2) = "Z" And flagArray(3) = "I" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextPrimary & statusParagraphPrimary & vbNewLine & statusTextSecondary & statusParagraphSecondary & vbNewLine & vbNewLine & reviewText2
+
+    ElseIf flagArray(0) = "A" And flagArray(1) = "Z" And flagArray(2) = "E" And flagArray(3) = "Z" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextPrimary & statusParagraphPrimary & vbNewLine & statusTextSecondary & statusParagraphSecondary & vbNewLine & vbNewLine & reviewText2
+
+    ElseIf flagArray(0) = "A" And flagArray(1) = "Z" And flagArray(2) = "E" And flagArray(3) = "I" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextPrimary & statusParagraphPrimary & vbNewLine & reviewText1
+
+    ElseIf flagArray(0) = "A" And flagArray(1) = "Z" And flagArray(2) = "Z" And flagArray(3) = "I" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextPrimary & statusParagraphPrimary & vbNewLine & reviewText2
+
+    ElseIf flagArray(0) = "Z" And flagArray(1) = "B" And flagArray(2) = "Z" And flagArray(3) = "Z" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextSecondary & statusParagraphSecondary
+
+    ElseIf flagArray(0) = "Z" And flagArray(1) = "B" And flagArray(2) = "E" And flagArray(3) = "Z" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextSecondary & statusParagraphSecondary & vbNewLine & reviewText1
+
+    ElseIf flagArray(0) = "Z" And flagArray(1) = "B" And flagArray(2) = "E" And flagArray(3) = "I" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextSecondary & statusParagraphSecondary & vbNewLine & reviewText1 & vbNewLine & reviewText2
+
+    ElseIf flagArray(0) = "Z" And flagArray(1) = "B" And flagArray(2) = "Z" And flagArray(3) = "I" Then
+        Worksheets(OutputSheet).Cells(t, 6) = statusTextSecondary & statusParagraphSecondary & vbNewLine & reviewText2
+
+    ElseIf flagArray(0) = "Z" And flagArray(1) = "Z" And flagArray(2) = "E" And flagArray(3) = "Z" Then
+        Worksheets(OutputSheet).Cells(t, 6) = reviewText1
+
+    ElseIf flagArray(0) = "Z" And flagArray(1) = "Z" And flagArray(2) = "E" And flagArray(3) = "I" Then
+        Worksheets(OutputSheet).Cells(t, 6) = reviewText1 & vbNewLine & reviewText2
+
+    ElseIf flagArray(0) = "Z" And flagArray(1) = "Z" And flagArray(2) = "Z" And flagArray(3) = "I" Then
+        Worksheets(OutputSheet).Cells(t, 6) = reviewText2
+    End If
+End If
+
+I = I + 1
+Next t
+
+Worksheets(OutputSheet).Activate
+ActiveSheet.Range("A1:G7641").Sort Key1:=Range("A1"), Order1:=xlAscending, Header:=xlYes
+
+End Sub
+
+</code></pre>
+				</div>
+			</div>
+		</section>
+
+	</div>
+
+	<!-- Footer -->
+	<footer id="footer" class="wrapper style1">
+		<div class="inner">
+			<ul class="menu">
+				<li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+				<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+				<li><a href="index.html#four">[Security Tooling]</a></li>
+			</ul>
+		</div>
+	</footer>
+
+	<!-- Scripts -->
+	<script src="assets/js/highlight.min.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', (event) => {
+			document.querySelectorAll('pre code').forEach((block) => {
+				hljs.highlightBlock(block);
+			});
+		});
+	</script>
+	<script src="assets/js/jquery.min.js"></script>
+	<script src="assets/js/jquery.scrollex.min.js"></script>
+	<script src="assets/js/jquery.scrolly.min.js"></script>
+	<script src="assets/js/browser.min.js"></script>
+	<script src="assets/js/breakpoints.min.js"></script>
+	<script src="assets/js/util.js"></script>
+	<script src="assets/js/main.js"></script>
+
+</body>
+</html>

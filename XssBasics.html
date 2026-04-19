@@ -1,0 +1,384 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+	<title>Crevice Testbed Vulnerable WebApp</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+	<link rel="stylesheet" href="assets/css/main.css?v=202235d233s4d8-2" />
+
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+	<!-- highlight.js theme -->
+	<link rel="stylesheet" href="styles/a11y-dark.css" />
+
+	<!-- project css-->
+	<link rel="stylesheet" href="assets/css/project-page.css">
+
+	
+
+</head>
+<body class="is-preload">
+
+	<!-- Header -->
+	<header id="header">
+		<a href="index.html" class="title">[Bernard]</a>
+		<nav>
+			<ul>
+				<li><a href="index.html#one">[Crevice Testbed]</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<section id="main" class="wrapper">
+			<div class="inner project-page">
+
+				<h1 class="major align-center">Cross-Site Scripting<span class="subtitle">Understanding Script Context and Syntax</span></h1>
+
+				<figure class="project-hero hero-medium hero-overlay">
+					<img src="images/xssBasic1_2.png" alt="XSS Basics Lab Image" />
+					<figcaption style="font-size: 11px">Figure 1: XSS Basics Lab in Crevice Testbed</figcaption>
+				</figure>
+
+				<div class="project-tags visually-hidden">
+					<span class="tag">Training</span>
+					<span class="tag">Web Application</span>
+					<span class="tag">XSS</span>
+					<span class="tag">JavaScript</span>
+				</div>
+
+
+				<section class="writeup-block">
+					<h2 class="writeup-title">Summary</h2>
+
+					<p class="writeup-lede">
+						The Cross-Site Scripting Basics, Basics Too, and Basics Thrice <a href="https://github.com/itnasb/CreviceTestbed"><em>Crevice Testbed</em></a> labs introduce XSS by showing how injected input behaves inside JavaScript
+						<code class="inline-code">&lt;script&gt;</code> tags under three different conditions. They progress from a simple injection
+						scenario with no surrounding code to more realistic cases where existing JavaScript requires
+						the payload to match a specific syntax and where the injection point is within a JavaScript comment requiring breaking into a new line for code execution.
+					</p>
+					<p></p>
+					<p>
+						The goal isn’t just to find reflection and say “this looks bad.” It’s to understand the execution context well enough to turn a weak or 
+						broken proof of concept into a reliable demonstration of exploitability that makes remediation hard to argue against and encourages the 
+						development team to prioritize it.
+					</p>
+				</section>
+
+
+				<section class="writeup-block">
+					<h2 class="writeup-title">Lab Objectives</h2>
+
+					<ul>
+						<li>Observe how user input is reflected inside <code class="inline-code">&lt;script&gt;</code> tags</li>
+						<li>Use browser developer tools to identify JavaScript errors</li>
+						<li>Understand how JavaScript syntax affects payload execution</li>
+						<li>Modify payloads to match the expected execution context</li>
+						<li>See how comments, strings, and line breaks can change exploitability</li>
+					</ul>
+				</section>
+
+
+				<section class="writeup-block">
+					<h2 class="writeup-title">Part 1: Direct Script Injection</h2>
+
+					<p>
+						In XSS Basics, user input is inserted directly into a <code class="inline-code">&lt;script&gt;</code>
+						element without any surrounding JavaScript.
+					</p>
+					<p>
+						When testing for reflections, a tester will often insert an easily identifiable string into application functionality that
+						accepts user input then observe how those strings are handled in the user interface as well as in their
+						browser developement tools. When <code class="inline-code">d34db33f</code> is injected it causes a syntax error in the development console
+						because it is being inserted directly into an HTML <code class="inline-code">&lt;script&gt;</code> element in a code context.
+					</p>
+
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasic1_4.png" alt="Direct script injection of normal string" />
+						<figcaption style="font-size: 11px">Figure 2: User input inserted directly into a script element</figcaption>
+					</figure>
+					<p>
+						Observe that injecting <code class="inline-code">'d34db33f</code> results a different syntax error in the development console. These
+						error messages provide syntax clues helpful for debugging during XSS testing within HTML script elements. Understand them. They should be
+						a part of your daily routine.
+					</p>
+
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasic1_5.png" alt="uncaught syntax error caused by the injection image" />
+						<figcaption style="font-size: 11px">Figure 3: Uncaught syntax error caused by the injection</figcaption>
+					</figure>
+					<p>
+						A basic payload such as:
+						<code class="inline-code">alert(1)</code>
+						executes immediately because it is interpreted as valid JavaScript.
+					</p>
+
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasic1_6.png" alt="Direct script injection" />
+						<figcaption style="font-size: 11px">Figure 4: Direct execution inside a script tag</figcaption>
+					</figure>
+
+					<p>
+						This demonstrates the simplest form of XSS, where injected input becomes executable code
+						with no additional constraints.
+					</p>
+				</section>
+
+
+				<section class="writeup-block">
+					<h2 class="writeup-title">Part 2: Injection Inside Existing JavaScript</h2>
+
+					<p>
+						In XSS Basics Too, user input is still reflected inside a <code class="inline-code">&lt;script&gt;</code>
+						tag, but now it's embedded within existing JavaScript code in a string context.
+					</p>
+
+					<p>
+						Submitting <code class="inline-code">d34db33f</code> results in no error message in the developer console and is reflected in a string context within single quotes inside the <code class="inline-code">&lt;script&gt;</code>
+					</p>
+
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasic2_2.png" alt="d34db33f and no error in console due to reflection in quotes" />
+						<figcaption style="font-size: 11px">Figure 5: d34db33f reflected within quotes</figcaption>
+					</figure>
+					<p>
+						Submitting <code class="inline-code">'alert(1)<span class="code-comment">//</span></code> results in a syntax error, but the error is different than we saw in the previous lab. Observe
+						that the developer console notes that a parenthesis is missing after argument list.
+					</p>
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasic2_4.png" alt="'alert(1)// and new error in console due to not satisfying existing syntax" />
+						<figcaption style="font-size: 11px">Figure 6: 'alert(1)// reflected and new error in console due to not satisfying existing syntax</figcaption>
+					</figure>
+					<p>
+						Inspecting the script in developer tools shows how the input is embedded within existing code. We have terminated the string context 
+						our injection had previously been reflected in and our injection is now being parsed as Javascript.
+					</p>
+
+					<p>
+						The payload must be modified to match the expected syntax. Consider the original syntax of <code class="inline-code">activateFluxMode('UserInput');</code> and what
+						our injection of <code class="inline-code">'alert(1)//</code> has changed. UserInput is expected to be handled as a string, but we have inserted a single quote which closed the
+						expected user input bit of the code. Ignore the <code class="inline-code">alert(1)</code> and focus on the single quote and <code class="inline-code"><span class="code-comment">//</span></code> characters. Imagine
+						that the code looks like this now <code class="inline-code">activateFluxMode(''<span class="code-comment">//');</span></code>. The single quote has allowed our input to be interpreted as JavaScript code, which
+						means that the <code class="inline-code"><span class="code-comment">//</span></code> characters are causing everything after them to be interpreted as comments.
+					</p>
+					<p>
+						In coding, symmetry is a fundamental principle for readability, structure, and debugging. It usually requires paired symbols
+						to be opened and closed correctly. Violating this symmetry, such as missing a parenthesis, curly brace, or closing quote is a primary cause of syntax errors. With
+						all this in mind, consider what you are removing from the existing code by including comment characters. To the interpreter, your code now looks like
+						<code class="inline-code">activateFluxMode(''<span class="code-comment">//</span></code> which removes symmetry from the existing code. Our syntax error says that the code is missing a parenthesis. If you
+						can see where it is needed, move ahead. If not, take another look.
+					</p>
+					<p>
+						Since we don't control the code before our injection point, we have to satisfy the created syntax of the code that exists before the point we are injecting
+						into. The original code had a single quote, a parenthesis, and a semicolon after the user input because there was an opening quote and semicolon before the user
+						input. We must put those back in order to satisfy the syntax of the existing code and execute our injected code.
+					</p>
+					<p>
+						Try <code class="inline-code">');alert(1)<span class="code-comment">//</span></code>
+					</p>
+
+					<p>
+						This closes the existing string, executes the payload, and comments out the remaining code
+						to prevent syntax errors.
+					</p>
+
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasic2_5.png" alt="Corrected payload execution" />
+						<figcaption style="font-size: 11px">Figure 7: Payload adjusted to match JavaScript syntax executes successfully</figcaption>
+					</figure>
+
+					<p>
+						With the syntax corrected, the injected JavaScript executes successfully.
+					</p>
+				</section>
+				<section class="writeup-block">
+					<h2 class="writeup-title">Part 3: Injection Inside a JavaScript Comment</h2>
+
+					<p>
+						XSS Basics Thrice builds on the earlier labs, but user-controllable data is reflected inside a JavaScript
+						comment, causing the JavaScript interpreter to ignore user input unless the attacker first breaks out of the
+						commented line.
+					</p>
+
+					<p>
+						A subtle but important difference from the previous labs is that this one uses a URL parameter for injection,
+						which will aid in exploitation.
+					</p>
+
+					<p>
+						Submitting <code class="inline-code">d34db33f</code> shows that the value is reflected and there are no errors
+						in the developer console. The same is true for <code class="inline-code">'d34db33f</code> and
+						<code class="inline-code">alert(1)</code>.
+					</p>
+
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasicThrice1_3.png" alt="Input reflected inside a JavaScript comment with no console error" />
+						<figcaption style="font-size: 11px">Figure 8: Input reflected inside a JavaScript comment</figcaption>
+					</figure>
+
+					<p>
+						None of the payloads execute because they remain inside the comment and are treated as comment text rather
+						than code by the interpreter.
+					</p>
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasicThrice1_3_debug.png" alt="The reflected comment code that produces no errors" />
+						<figcaption style="font-size: 11px">Figure 9: The reflected comment code that produces no errors</figcaption>
+					</figure>
+					<p>
+						The constraints imposed by the comment syntax have to be escaped.
+					</p>
+
+					<p>
+						<code class="inline-code">%0A</code> is a URL-encoded newline. This can change the structure of the script by
+						ending the current commented line and moving the injected content into the next line. After inserting
+						<code class="inline-code">%0Aalert(1)</code>, a console error should be produced in developer tools rather
+						than execution. This is an important clue: the payload is no longer safely trapped inside the comment and is
+						being interpreted, but the resulting script still isn’t valid.
+					</p>
+
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasicThrice1_5.png" alt="Console error after injecting a newline into a JavaScript comment" />
+						<figcaption style="font-size: 11px">Figure 10: Injecting a newline breaks out of the comment but still causes a syntax error</figcaption>
+					</figure>
+
+					<p>
+						Finally, submitting <code class="inline-code">%0Aalert(1)<span class="code-comment">//</span></code> leads to
+						code execution. The newline ends the original comment, <code class="inline-code">alert(1)</code> executes on
+						the next line as live JavaScript, and the trailing
+						<code class="inline-code"><span class="code-comment">//</span></code> comments out whatever follows so the rest
+						of the script doesn’t cause a syntax problem.
+					</p>
+
+					<p>
+						We’ve escaped the JavaScript comment by injecting a newline, then commented out the remainder of the line to
+						preserve valid syntax.
+					</p>
+
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasicThrice1_8.png" alt="Successful execution after escaping the JavaScript comment" />
+						<figcaption style="font-size: 11px">Figure 11: The code after escaping the comment and preserving syntax</figcaption>
+					</figure>
+					<figure class="project-hero hero-medium hero-overlay">
+						<img src="images/xssBasicThrice1_6.png" alt="Successful execution after escaping the JavaScript comment" />
+						<figcaption style="font-size: 11px">Figure 12: Payload executes after escaping the comment and preserving syntax</figcaption>
+					</figure>
+					<p>
+						Reflection alone doesn’t tell you enough. The problem changes depending on the context you inject into, so you
+						have to understand the parser state at the injection point. Here, the problem is escaping a JavaScript
+						comment by injecting a line break and then preventing the remaining script from breaking execution.
+					</p>
+				</section>
+
+				<section class="writeup-block">
+					<h2 class="writeup-title">Using Developer Tools</h2>
+
+					<p>
+						This lab is designed to reinforce the use of browser developer tools during testing.
+					</p>
+
+					<ul>
+						<li>Use the <strong>Console</strong> tab to identify syntax errors</li>
+						<li>Use the <strong>Elements</strong> or <strong>Sources</strong> tab to inspect how input is rendered</li>
+						<li>Observe how small payload changes affect execution</li>
+						<li>Compare whether input lands in raw script, a string, or a comment</li>
+					</ul>
+
+					<p>
+						Understanding how the browser interprets injected input is key to successfully exploiting
+						client-side vulnerabilities.
+					</p>
+				</section>
+
+
+				<section class="writeup-block">
+					<h2 class="writeup-title">Key Takeaways</h2>
+
+					<ul>
+						<li>Not all reflected input executes as JavaScript</li>
+						<li>Execution depends on the surrounding context and syntax</li>
+						<li>Input reflected in raw script, strings, and comments each requires a different approach</li>
+						<li>Syntax errors often provide clues for crafting a working payload</li>
+						<li>Developer tools are essential for analyzing and debugging XSS</li>
+					</ul>
+				</section>
+
+
+				<section class="writeup-block">
+					<h2 class="writeup-title">Common Pitfall</h2>
+
+					<p>
+						One performing security testing or web application penetration testing who doesn’t know how to interpret browser error messages will often assume that a non-executing payload means the application is not vulnerable.
+						</p><p>That's risky.</p><p>
+	As XSS gets more complex, especially in DOM-based cases, that assumption becomes even more serious.
+</p>
+
+					<p>
+						This lab demonstrates that adjusting the payload to fit the surrounding JavaScript can turn
+						a non-working test into a successful exploit.
+					</p>
+				</section>
+
+
+			</div>
+</section ></div >
+
+
+								<!--Footer -->
+								<footer id="footer" class="wrapper style1">
+									<div class="inner">
+										<ul class="menu">
+											<li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+											<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+											<li><a href="index.html#one">[Crevice Testbed]</a></li>
+											<li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
+										</ul>
+									</div>
+								</footer>
+
+								<!--Scripts -->
+									<script src="assets/js/jquery.min.js"></script>
+							<script src="assets/js/jquery.scrollex.min.js"></script>
+							<script src="assets/js/jquery.scrolly.min.js"></script>
+							<script src="assets/js/browser.min.js"></script>
+							<script src="assets/js/breakpoints.min.js"></script>
+							<script src="assets/js/util.js"></script>
+							<script src="assets/js/main.js"></script>
+
+							<!-- highlight.js -->
+							<script src="assets/js/highlight.min.js"></script>
+							<script>
+										document.addEventListener('DOMContentLoaded', () => {
+											if (window.hljs) {
+												if (typeof hljs.highlightAll === 'function') {
+												hljs.highlightAll();
+												} else {
+                                                    document.querySelectorAll('pre code, .inline-code').forEach((block) => hljs.highlightBlock(block));
+												}
+											}
+										});
+							</script>
+							<script>
+							document.querySelectorAll(".ioc-pill").forEach(el => {
+							el.addEventListener("click", () => {
+							navigator.clipboard.writeText(el.innerText);
+
+							el.classList.add("copied");
+
+							setTimeout(() => {
+								el.classList.remove("copied");
+								}, 1200);
+							});
+							});
+							</script>
+											<script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>

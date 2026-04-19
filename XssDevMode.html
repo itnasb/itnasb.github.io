@@ -1,0 +1,252 @@
+<!DOCTYPE HTML>
+<!--
+    Hyperspace by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+    <title>CFWheels Reload XSS | Bernard Santillan</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel="stylesheet" href="assets/css/main.css?v=2022353s4d8-2" />
+
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+    <!-- highlight.js theme -->
+    <link rel="stylesheet" href="styles/a11y-dark.css" />
+
+    <!-- project css-->
+    <link rel="stylesheet" href="assets/css/project-page.css">
+</head>
+<body class="is-preload">
+
+    <!-- Header -->
+    <header id="header">
+        <a href="index.html" class="title">[Bernard]</a>
+        <nav>
+            <ul>
+                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Main -->
+        <section id="main" class="wrapper">
+            <div class="inner project-page">
+
+                <h1 class="major align-center">CFWheels Reload XSS<span class="subtitle">Reflected XSS Through Exposed Environment Switching and Diagnostics Output</span></h1>
+
+                <figure class="project-hero hero-large hero-overlay">
+                    <img src="images/xssWheels1_1.png" alt="CFWheels Reload XSS lab in Crevice Testbed" />
+                    <figcaption style="font-size: 11px">Figure 1: CFWheels Reload XSS lab in Crevice Testbed</figcaption>
+                </figure>
+
+                <div class="project-tags visually-hidden">
+                    <span class="tag">Application Security</span>
+                    <span class="tag">Training</span>
+                    <span class="tag">ColdFusion</span>
+                    <span class="tag">CFWheels</span>
+                    <span class="tag">Reflected XSS</span>
+                    <span class="tag">Misconfiguration</span>
+                    <span class="tag">Web Application</span>
+                </div>
+
+                <div class="project-writeup">
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Summary</h2>
+
+                        <p class="writeup-lede">
+                            This <a href="https://github.com/itnasb/CreviceTestbed"><em>Crevice Testbed</em></a> lab recreates a server misconfiguration involving Adobe ColdFusion applications using CFWheels. CFWheels supports changing the application environment with a URL parameter called <code class="inline-code">reload</code>. In non-production modes, the framework exposes a diagnostics panel that reflects URL parameters and their values into the page.
+                        </p>
+                        <p></p>
+                        <p>
+                            Adobe recommends disabling environment switching in production. In this lab, that safeguard was forgotten. A user can switch the app into development mode with <code class="inline-code">reload=development</code>, expose the diagnostics panel, and inject a reflected XSS payload through an additional URL parameter.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Lab Objectives</h2>
+
+                        <ul>
+                            <li>Use the <code class="inline-code">reload</code> URL parameter to switch the application into development mode</li>
+                            <li>Observe that the diagnostics panel reflects URL parameters and values</li>
+                            <li>Add a benign parameter and confirm it appears in the panel</li>
+                            <li>Replace that value with a script payload and trigger XSS</li>
+                            <li>Inspect the DOM and confirm the payload is rendered as an actual script element</li>
+                        </ul>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Technical Walkthrough</h2>
+
+                        <p>
+                            The lab begins with the application behaving like a production-facing deployment. But the server still honors the CFWheels <code class="inline-code">reload</code> parameter.</p>
+                        <p>This means a user can force the application into a different environment just by changing the URL using<code class="inline-code">?reload=development</code>
+                        </p>
+
+                        <figure class="project-hero hero-large hero-overlay">
+                            <img src="images/xssWheels1_2.png" alt="The application is switched into development mode using the reload parameter" />
+                            <figcaption style="font-size: 11px">Figure 2: The application is switched into development mode using the reload parameter</figcaption>
+                        </figure>
+
+                        <p>
+                            Once the environment changes, the application exposes a diagnostics panel intended for non-production use. That panel displays request data, including URL parameters.
+                        </p>
+
+                        <p>
+                            Next, append an additional benign parameter: <code class="inline-code">&amp;note=hello</code>
+                        </p>
+
+
+                        <p></p>
+                        <p>
+                            The diagnostics panel reflects the new parameter and its value. That confirms the page isn’t only showing the framework control parameter. It’s reflecting attacker-controlled request data more generally.
+                        </p>
+
+                        <figure class="project-hero hero-large hero-overlay">
+                            <img src="images/xssWheels1_3.png" alt="The diagnostics panel reflects the note parameter and its value" />
+                            <figcaption style="font-size: 11px">Figure 3: The diagnostics panel reflects the note parameter and its value</figcaption>
+                        </figure>
+
+                        <p>
+                            Replace the benign value with a basic XSS payload: <code class="inline-code">&lt;script&gt;alert(1)&lt;/script&gt;</code>
+                        </p>
+
+
+
+                        <p></p>
+                        <p>
+                            The payload executes in the browser, confirming reflected XSS exposed through a development diagnostics feature.
+                        </p>
+
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/xssWheels1_4.png" alt="The injected script executes after being reflected by the diagnostics panel" />
+                            <figcaption style="font-size: 11px">Figure 4: The injected script executes after being reflected by the diagnostics panel</figcaption>
+                        </figure>
+
+                        <p>
+                            The user can inspect the document in the browser developer tools and see that the payload was rendered into the DOM as an actual <code class="inline-code">&lt;script&gt;</code> element rather than harmless text.
+                        </p>
+
+                        <figure class="project-hero hero-large hero-overlay">
+                            <img src="images/xssWheels1_5.png" alt="Browser developer tools show the payload rendered as a real script element in the DOM" />
+                            <figcaption style="font-size: 11px">Figure 5: Browser developer tools show the payload rendered as a real script element in the DOM</figcaption>
+                        </figure>
+
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">The Logic Failure</h2>
+
+                        <p>
+                            The root issue is in Adobe's poor choice to reflect user controlled data into the browser unsafely. There is no good reason for this even in a development environment.
+                        </p>
+                        <p> But I digress.</p>
+                        <p>
+                            The problem starts server-side. The application shouldn’t allow environment switching in a production-facing deployment. Once that safeguard fails, a development-only diagnostics panel becomes reachable by an user. That panel then reflects attacker-controlled URL parameters into the page without safe output encoding.
+                        </p>
+                        <p>The failure stack looks like this:</p>
+                        <ul>
+                            <li>Environment switching left enabled</li>
+                            <li>User forces app into development mode</li>
+                            <li>Diagnostics panel becomes accessible</li>
+                            <li>User-controlled parameters are reflected</li>
+                            <li>Reflected input is rendered unsafely</li>
+                            <li>Browser-executable script runs</li>
+                        </ul>
+
+
+                        <p>
+                            The XSS sink only becomes reachable because a server misconfiguration exposed functionality that shouldn’t have been available in the first place.
+                        </p>
+
+                        <p>
+                            A safer design would assume that environment switching and diagnostics features are operational controls, not user features:
+                        </p>
+
+                        <ul>
+                            <li>disable environment switching in production</li>
+                            <li>restrict diagnostics interfaces to trusted users and trusted environments</li>
+                            <li>apply context-appropriate output encoding even in internal tooling</li>
+                            <li>treat reflected request data as untrusted input everywhere it appears</li>
+                        </ul>
+                        <p>
+                            Forgetting that is how you turn a framework convenience feature into an exploit path.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Key Takeaways</h2>
+
+                        <ul>
+                            <li>Debug functionality exposed in production is usually an information disclosure issue, but it can also become an active code execution path in the browser</li>
+                            <li>Environment switching shouldn’t be reachable from a public-facing deployment</li>
+                            <li>Misconfiguration can be the thing that unlocks exploitation rather than the bug being directly exposed by default</li>
+                            <li>Diagnostics pages are still web pages and still need safe output handling</li>
+                            <li>Reflected XSS can emerge from internal tooling when trusted-only assumptions are allowed to leak into production</li>
+                            <li>If an attacker can reach a development feature, it has to be treated as part of the application’s attack surface</li>
+                            <li>As a defense-in-depth control, user-controllable output should always be handled safely, even in develompent environments</li>
+                        </ul>
+                    </section>
+
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="wrapper style1">
+        <div class="inner">
+            <ul class="menu">
+                <li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+                <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+                <li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+    <!-- highlight.js -->
+    <script src="assets/js/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.hljs) {
+                if (typeof hljs.highlightAll === 'function') {
+                    hljs.highlightAll();
+                } else {
+                    document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+                }
+            }
+        });
+    </script>
+    <script>
+        document.querySelectorAll(".ioc-pill").forEach(el => {
+            el.addEventListener("click", () => {
+                navigator.clipboard.writeText(el.innerText);
+
+                el.classList.add("copied");
+
+                setTimeout(() => {
+                    el.classList.remove("copied");
+                }, 1200);
+            });
+        });
+    </script>
+    <script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>

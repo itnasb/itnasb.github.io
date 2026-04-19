@@ -1,0 +1,212 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+	<title>Crevice Testbed Vulnerable WebApp</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+	<link rel="stylesheet" href="assets/css/main.css?v=2022353s4sdd8-2" />
+
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+	<!-- highlight.js theme -->
+	<link rel="stylesheet" href="styles/a11y-dark.css" />
+
+	<!-- project css-->
+	<link rel="stylesheet" href="assets/css/project-page.css">
+
+	
+
+</head>
+<body class="is-preload">
+
+	<!-- Header -->
+	<header id="header">
+		<a href="index.html" class="title">[Bernard]</a>
+		<nav>
+			<ul>
+				<li><a href="index.html#one">[Crevice Testbed]</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<section id="main" class="wrapper">
+			<div class="inner project-page">
+
+				<h1 class="major align-center">Cross-Site Scripting<span class="subtitle">Escaping a &lt;textarea&gt; Context</span></h1>
+
+				<figure class="project-hero hero-large hero-overlay">
+					<img src="images/textarea1_1.png" alt="Textarea XSS Demonstration" />
+					<figcaption style="font-size: 11px">Figure 1: Cross-Site Scripting textarea context</figcaption>
+				</figure>
+
+				<div class="project-tags visually-hidden">
+					<span class="tag">Application Security</span>
+					<span class="tag">Training</span>
+					<span class="tag">Cross-Site Scripting</span>
+					<span class="tag">Burp Suite</span>
+					<span class="tag">Automation</span>
+				</div>
+
+				<div class="project-writeup">
+					<section class="writeup-block">
+						<h2 class="writeup-title">Summary</h2>
+
+						<p class="writeup-lede">
+							This <a href="https://github.com/itnasb/CreviceTestbed"><em>CreviceTestbed</em></a> lab demonstrates a Cross-Site Scripting scenario where user input is reflected inside a
+							<code class="inline-code">&lt;textarea&gt;</code> element. Because browsers treat content inside a textarea as plain
+							text, injected HTML and JavaScript don't execute even when they appear to be reflected correctly.
+						</p>
+						<p></p>
+						<p>
+							The objective is to identify why a typical XSS payload fails and modify it so that it escapes
+							the textarea context and executes successfully. This lab reinforces the importance of understanding
+							how HTML context affects exploitability.
+						</p>
+
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Lab Objectives</h2>
+
+						<ul>
+							<li>Identify why a reflected XSS payload does not execute</li>
+							<li>Use browser developer tools to inspect rendered HTML</li>
+							<li>Understand how the <code class="inline-code">&lt;textarea&gt;</code> element affects execution</li>
+							<li>Modify a payload to escape the textarea context</li>
+						</ul>
+					</section>
+
+
+
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Technical Walkthrough</h2>
+
+						<p>
+							Submitting a basic XSS payload such as
+							<code class="inline-code">&lt;svg onload=alert(1)&gt;</code>
+							results in the payload being reflected in the response but not executed.
+						</p>
+
+						<p>
+							Inspecting the page using browser developer tools reveals that the input is placed inside a
+							<code class="inline-code">&lt;textarea&gt;</code> element. In this context, HTML tags are treated as literal text and
+							are not interpreted by the browser, explaining why the injected tag doesn't execute.
+						</p>
+
+						<figure class="project-hero hero-medium hero-overlay">
+							<img src="images/textarea1_2.png" alt="Payload inside textarea context" />
+							<figcaption style="font-size: 11px">Figure 2: Reflected payload inside textarea context</figcaption>
+						</figure>
+
+						<p>
+							To achieve execution, the payload must first escape the textarea element. This can be done by
+							injecting a closing <code class="inline-code">&lt;/textarea&gt;</code> tag before introducing executable content.
+						</p>
+
+						<p>
+							A working payload might look like <code class="inline-code">&lt;/textarea&gt;&lt;svg onload=alert(1)&gt;</code>
+						</p>
+
+						<p>
+							When this payload is reflected, the textarea is closed and the injected svg element is interpreted
+							as part of the page, resulting in JavaScript execution.
+						</p>
+
+
+						<figure class="project-hero hero-medium hero-overlay">
+							<img src="images/textarea1_5.png" alt="Breaking out of textarea context" />
+							<figcaption style="font-size: 11px">Figure 3: Closing the textarea allows injected markup to execute</figcaption>
+						</figure>
+
+					</section>
+					<section class="writeup-block">
+						<h2 class="writeup-title">Key Takeaways</h2>
+
+						<ul>
+							<li>Reflected input is not always immediately exploitable</li>
+							<li>HTML context determines whether injected code executes</li>
+							<li>Developer tools are essential for understanding how input is rendered</li>
+							<li>Small payload modifications can change a non-exploitable case into a working exploit</li>
+						</ul>
+					</section>
+					<section class="writeup-block">
+						<h2 class="writeup-title">Common Pitfall</h2>
+
+						<p>
+							It is common to dismiss reflections inside textarea elements because initial payloads don't
+							execute. Automated tools may also fail to generate working payloads in this context.
+						</p>
+
+						<p>
+							This lab highlights the importance of manually inspecting how input is embedded in the page and
+							adjusting payloads based on the surrounding HTML structure.
+						</p>
+					</section>
+					
+
+				</div>
+			</div>
+</section ></div >
+
+
+								<!--Footer -->
+								<footer id="footer" class="wrapper style1">
+									<div class="inner">
+										<ul class="menu">
+											<li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+											<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+											<li><a href="index.html#one">[Crevice Testbed]</a></li>
+											<li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
+										</ul>
+									</div>
+								</footer>
+
+								<!--Scripts -->
+									<script src="assets/js/jquery.min.js"></script>
+							<script src="assets/js/jquery.scrollex.min.js"></script>
+							<script src="assets/js/jquery.scrolly.min.js"></script>
+							<script src="assets/js/browser.min.js"></script>
+							<script src="assets/js/breakpoints.min.js"></script>
+							<script src="assets/js/util.js"></script>
+							<script src="assets/js/main.js"></script>
+
+							<!-- highlight.js -->
+							<script src="assets/js/highlight.min.js"></script>
+							<script>
+										document.addEventListener('DOMContentLoaded', () => {
+											if (window.hljs) {
+												if (typeof hljs.highlightAll === 'function') {
+												hljs.highlightAll();
+												} else {
+												document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+												}
+											}
+										});
+							</script>
+							<script>
+							document.querySelectorAll(".ioc-pill").forEach(el => {
+							el.addEventListener("click", () => {
+							navigator.clipboard.writeText(el.innerText);
+
+							el.classList.add("copied");
+
+							setTimeout(() => {
+								el.classList.remove("copied");
+								}, 1200);
+							});
+							});
+							</script>
+											<script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>

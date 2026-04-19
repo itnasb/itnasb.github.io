@@ -1,0 +1,184 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+	<title>Crevice Testbed Vulnerable WebApp</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+	<link rel="stylesheet" href="assets/css/main.css?v=202235s4d8-2" />
+
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+	<!-- highlight.js theme -->
+	<link rel="stylesheet" href="styles/a11y-dark.css" />
+
+	<!-- project css-->
+	<link rel="stylesheet" href="assets/css/project-page.css">
+
+	
+
+</head>
+<body class="is-preload">
+
+	<!-- Header -->
+	<header id="header">
+		<a href="index.html" class="title">[Bernard]</a>
+		<nav>
+			<ul>
+				<li><a href="index.html#one">[Crevice Testbed]</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<section id="main" class="wrapper">
+			<div class="inner project-page">
+
+				<h1 class="major align-center">Crevice Testbed<span class="subtitle">Application Security Training Lab Vulnerable by Design</span></h1>
+
+				<figure class="project-hero hero-large hero-overlay">
+					<img src="images/creviceLanding3.png" alt="Crevice Testbed Landing Page Image" />
+					<figcaption style="font-size: 11px">Figure 1: Crevice Testbed</figcaption>
+				</figure>
+
+				<div class="project-tags visually-hidden">
+					<span class="tag">Security Testing</span>
+					<span class="tag">Web Application</span>
+					<span class="tag">Training</span>
+				</div>
+
+
+
+				<div class="project-writeup">
+					<section class="writeup-block">
+						<h2 class="writeup-title">Overview</h2>
+						<p class="writeup-lede">
+							<a href="https://github.com/itnasb/CreviceTestbed">Crevice Testbed</a> is an intentionally vulnerable web application I built to support application
+							security training and research. The project serves two primary purposes: demonstrating
+							real-world vulnerability patterns I have discovered during professional security assessments,
+							and providing a practical environment for learning how to investigate those issues using
+							standard testing tools and techniques.
+						</p>
+						<p></p>
+						<p>
+							Crevice Testbed is designed to encourage curiousity, recreating realistic vulnerability conditions 
+							in a controlled environment that can be safely studied and documented.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Motivation</h2>
+						<p>
+							During application security engagements I have frequently encountered vulnerability patterns
+							that are difficult to discuss publicly due to disclosure constraints. Crevice Testbed allows me
+							to safely recreate those behaviors without exposing vendor or customer systems. Each lab
+							mirrors a vulnerability class I have personally encountered, enabling me to publish detailed
+							technical writeups while still respecting responsible disclosure requirements.
+						</p>
+
+						<p>
+							The project is also motivated by a common skills gap observed during security testing. Modern
+							scanners are powerful, but effective testing still requires manual investigation, browser
+							tooling, and an understanding of how client-side logic interacts with server-side controls.
+							Crevice Testbed provides guided labs that encourage testers to move beyond automated scanning
+							and develop those investigative skills.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Training Focus</h2>
+						<p>
+							The labs emphasize practical testing workflows rather than puzzle-style exploitation.
+							Modules are positioned loosely in order of least complexity to greatest.Testers are encouraged to inspect network traffic, review client-side JavaScript,
+							use browser developer tools, and reason about how application behavior changes when
+							inputs are modified. Many scenarios intentionally require these techniques in order
+							to identify the underlying issue.
+						</p>
+
+						<p>
+							Each module focuses on a specific vulnerability class such as input validation flaws,
+							access control weaknesses, or file handling mistakes. The goal is not simply to exploit
+							the issue, but to demonstrate the investigative process that leads to discovering it.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Lab Design</h2>
+						<p>
+							Crevice Testbed modules are designed to replicate realistic conditions encountered in
+							production applications. Instead of isolated challenges, each lab includes contextual
+							behavior such as partial mitigations, misleading client-side controls, or error handling
+							that obscures the underlying issue. These elements reflect the types of scenarios security
+							testers encounter during real assessments.
+						</p>
+
+						<p>
+							The platform also serves as the foundation for many of the vulnerability writeups in this
+							portfolio. By recreating real assessment findings in a controlled environment, I am able to
+							document the discovery process, demonstrate exploitation techniques, and explain defensive
+							lessons without exposing sensitive systems or proprietary code.
+						</p>
+					</section>
+
+
+
+				</div></div>
+		</section></div>
+	   
+
+	<!-- Footer -->
+	<footer id="footer" class="wrapper style1">
+		<div class="inner">
+			<ul class="menu">
+				<li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+				<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+				<li><a href="index.html#one">[Crevice Testbed]</a></li>
+				<li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
+			</ul>
+		</div>
+	</footer>
+
+	<!-- Scripts -->
+	<script src="assets/js/jquery.min.js"></script>
+	<script src="assets/js/jquery.scrollex.min.js"></script>
+	<script src="assets/js/jquery.scrolly.min.js"></script>
+	<script src="assets/js/browser.min.js"></script>
+	<script src="assets/js/breakpoints.min.js"></script>
+	<script src="assets/js/util.js"></script>
+	<script src="assets/js/main.js"></script>
+
+	<!-- highlight.js -->
+	<script src="assets/js/highlight.min.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			if (window.hljs) {
+				if (typeof hljs.highlightAll === 'function') {
+					hljs.highlightAll();
+				} else {
+					document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+				}
+			}
+		});
+	</script>
+	<script>document.querySelectorAll(".ioc-pill").forEach(el => {
+            el.addEventListener("click", () => {
+                navigator.clipboard.writeText(el.innerText);
+
+                el.classList.add("copied");
+
+                setTimeout(() => {
+                    el.classList.remove("copied");
+                }, 1200);
+            });
+        });</script>
+		<script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>

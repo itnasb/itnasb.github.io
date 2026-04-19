@@ -1,0 +1,274 @@
+<!DOCTYPE HTML>
+<!--
+    Hyperspace by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+    <title>Unsafe Upload | Bernard Santillan</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel="stylesheet" href="assets/css/main.css?v=2022353s4d8-2" />
+
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+    <!-- highlight.js theme -->
+    <link rel="stylesheet" href="styles/a11y-dark.css" />
+
+    <!-- project css-->
+    <link rel="stylesheet" href="assets/css/project-page.css">
+</head>
+<body class="is-preload">
+
+    <!-- Header -->
+    <header id="header">
+        <a href="index.html" class="title">[Bernard]</a>
+        <nav>
+            <ul>
+                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Main -->
+        <section id="main" class="wrapper">
+            <div class="inner project-page">
+
+                <h1 class="major align-center">Unsafe Upload<span class="subtitle">Stored XSS and Remote Code Execution Through Unrestricted File Upload</span></h1>
+
+                <figure class="project-hero hero-large hero-overlay">
+                    <img src="images/unsafeupload1_1.png" alt="Unsafe Upload lab in Crevice Testbed" />
+                    <figcaption style="font-size: 11px">Figure 1: Unsafe Upload lab in Crevice Testbed</figcaption>
+                </figure>
+
+                <div class="project-tags visually-hidden">
+                    <span class="tag">Application Security</span>
+                    <span class="tag">Training</span>
+                    <span class="tag">File Upload</span>
+                    <span class="tag">Stored XSS</span>
+                    <span class="tag">Remote Code Execution</span>
+                    <span class="tag">Web Application</span>
+                </div>
+
+                <div class="project-writeup">
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Summary</h2>
+
+                        <p class="writeup-lede">
+                            This <a href="https://github.com/itnasb/CreviceTestbed"><em>Crevice Testbed</em></a> lab demonstrates an unrestricted file upload vulnerability. The application accepts user-supplied files, stores them in a web-accessible location using the supplied filename, and returns a link that allows the uploaded file to be requested afterward. Because the handler doesn’t meaningfully restrict dangerous file types, uploaded HTML can execute in the browser as stored XSS and uploaded PHP can execute on the server as remote code execution.
+                        </p>
+                        <p></p>
+                        <p>
+                            This lab is useful because it shows how file upload is treated by vulnerability scanners as a single issue category when it is really a delivery mechanism for several different classes of impact. It’s up to the tester to demonstrate the actual severity of the issue. If the application lets users upload browser-executable content, the result may be XSS. If it lets users upload server-executable code into a reachable location, the result may be full code execution. Same feature. Different consequences. Much worse day.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Lab Objectives</h2>
+
+                        <ul>
+                            <li>Identify unrestricted file upload behavior</li>
+                            <li>Understand why filename sanitization isn’t the same as file validation</li>
+                            <li>Observe how uploaded files are stored and served back to users</li>
+                            <li>Recognize how uploaded HTML can produce stored XSS</li>
+                            <li>Recognize how uploaded PHP can produce remote code execution</li>
+                            <li>Understand why upload security depends on validation, storage location, and server behavior together</li>
+                        </ul>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Technical Walkthrough</h2>
+
+                        <p>
+                            The application accepts a file upload and stores the uploaded file using the original filename supplied by the user. The handler removes null bytes and path separators from the name, but it doesn’t restrict dangerous extensions or inspect the uploaded content.
+                        </p>
+
+                        <div class="code-card">
+<pre class="pre-shadow"><code class="language-php">$orig = basename((string)$_FILES['file']['name']);
+$orig = str_replace(["\0", "/", "\\"], "", $orig);
+
+if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadDir.$orig)) {
+
+    $_SESSION['raw_name'] = $orig;
+    $_SESSION['stored_for_display'] = $orig;
+    $_SESSION['current_file'] = $orig;
+
+    unset($_SESSION['decoded_name']);
+
+    $msg = 'Upload OK';
+} else {
+    $msg = 'Upload save failed';
+        }</code></pre></div>
+
+                            <p>
+                                This matters because:
+                            </p>
+
+                            <ul>
+                                <li>The application accepts whatever filename and extension the user provides, aside from removing path separators and null bytes</li>
+                                <li>The file is written directly into the upload directory under that name</li>
+                                <li>The application returns a link that allows the user to request the uploaded file afterward</li>
+                            </ul>
+
+                            <figure class="project-hero hero-medium hero-overlay">
+                                <img src="images/unsafeupload1_2.png" alt="The application accepts a user-supplied file and stores it with the supplied filename" />
+                                <figcaption style="font-size: 11px">Figure 2: The application accepts a user-supplied file and stores it with the supplied filename</figcaption>
+                            </figure>
+
+                            <p>
+                                Begin by testing what kinds of files the application accepts. Since the handler performs no meaningful file validation, it’s possible to upload active content.
+                            </p>
+
+                            <p>
+                                First, upload an <code class="inline-code">.html</code> file containing a simple JavaScript proof of concept.
+                            </p>
+                            <div class="code-card">
+                                <pre class="pre-shadow"><code class="html">&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>
+                            </div>
+                            <p></p>
+                            <p>The upload succeeds and the application returns a link to view the file. When that link is opened, the browser renders the uploaded HTML document and executes the script.</p>
+
+                            <figure class="project-hero hero-medium hero-overlay">
+                                <img src="images/unsafeupload1_5.png" alt="An uploaded HTML file is rendered as active content and executes attacker-controlled JavaScript" />
+                                <figcaption style="font-size: 11px">Figure 3: An uploaded HTML file is rendered as active content and executes attacker-controlled JavaScript</figcaption>
+                            </figure>
+                            <figure class="project-hero hero-medium hero-overlay">
+                                <img src="images/unsafeupload1_4.png" alt="An uploaded HTML file is rendered as active content and executes attacker-controlled JavaScript" />
+                                <figcaption style="font-size: 11px">Figure 4: An uploaded HTML file is rendered as active content and executes attacker-controlled JavaScript</figcaption>
+                            </figure>
+                            <p>
+                                This is stored XSS through file upload. The application stores attacker-controlled HTML and later serves it back in a way that allows the browser to interpret it as a page.
+                            </p>
+
+                            <p>
+                                Next, upload a <code class="inline-code">.php</code> file containing a simple proof of concept such as:
+                            </p>
+                            <div class="code-card">
+                                <pre class="pre-shadow"><code class="php">&lt;?php phpinfo(); ?&gt;</code></pre>
+                            </div>
+                            <p></p> <p>
+                                Upload again succeeds, and the application returns a link to the uploaded file. When that file is requested, the server executes the PHP code and returns the resulting output.
+                            </p>
+
+                            <figure class="project-hero hero-medium hero-overlay">
+                                <img src="images/unsafeupload1_8.png" alt="An uploaded PHP file is executed by the server when requested" />
+                                <figcaption style="font-size: 11px">Figure 5: An uploaded PHP file is executed by the server when requested</figcaption>
+                            </figure>
+
+                            <p>
+                                Now the issue is no longer just stored XSS or unsafe content hosting. It’s remote code execution. The application has allowed a user to place server-executable code into a reachable location and then trigger it through a normal web request. This escalates the severity of the vulnerability from a likely medium severity to a high or critical.
+                            </p>
+</section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Why the Logic Fails</h2>
+
+                        <p>
+                            The handler does perform a little bit of input handling, but it performs the wrong kind.
+                        </p>
+
+                        <p>
+                            Removing null bytes and slashes from the filename helps prevent filename tricks such as path traversal, but it doesn’t make the upload safe. The dangerous part of this feature is that the user controls what type of file is stored and then gets to retrieve it from a location where the browser or server will execute it.
+                        </p>
+
+<pre><code class="language-plaintext">accept uploaded file
+strip a few unsafe filename characters
+save file using user-controlled name
+make file reachable after upload</code></pre>
+
+                        <p>
+                            There’s no allowlist for safe file types. There’s no content inspection. There’s no filename randomization. There’s no separation between uploaded content and executable web content.
+                        </p>
+
+                        <p>
+                            A safer design would assume all uploaded files are untrusted and treat them accordingly:
+                        </p>
+
+                        <ul>
+                            <li>allow only a small set of safe file types</li>
+                            <li>validate content, not just extension</li>
+                            <li>rename files before storage</li>
+                            <li>store uploads outside the web root when possible</li>
+                            <li>serve them back as downloads rather than executable content</li>
+                            <li>disable script execution in upload directories</li>
+                        </ul>
+                        <p>
+                            Not doing this is how you end up hosting attacker-controlled HTML one minute and executing attacker-controlled code the next.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Key Takeaways</h2>
+
+                        <ul>
+                            <li>Filename sanitization isn’t the same as upload security</li>
+                            <li>Removing slashes from a filename doesn’t prevent dangerous file types from being uploaded</li>
+                            <li>Unrestricted file upload can lead to stored XSS when uploaded HTML is rendered by the browser</li>
+                            <li>Unrestricted file upload can lead to remote code execution when uploaded server-side code is stored in an executable location</li>
+                            <li>Upload security requires validation, controlled storage, and safe serving behavior</li>
+                            <li>User uploads should never be trusted simply because they arrived through a normal application feature</li>
+                        </ul>
+                    </section>
+
+
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="wrapper style1">
+        <div class="inner">
+            <ul class="menu">
+                <li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+                <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+                <li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+    <!-- highlight.js -->
+    <script src="assets/js/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.hljs) {
+                if (typeof hljs.highlightAll === 'function') {
+                    hljs.highlightAll();
+                } else {
+                    document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+                }
+            }
+        });
+    </script>
+    <script>
+        document.querySelectorAll(".ioc-pill").forEach(el => {
+            el.addEventListener("click", () => {
+                navigator.clipboard.writeText(el.innerText);
+
+                el.classList.add("copied");
+
+                setTimeout(() => {
+                    el.classList.remove("copied");
+                }, 1200);
+            });
+        });
+    </script>
+    <script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>

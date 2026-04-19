@@ -1,0 +1,283 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+	<title>Crevice Testbed Vulnerable WebApp</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+	<link rel="stylesheet" href="assets/css/main.css" />
+
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+	<!-- highlight.js theme -->
+	<link rel="stylesheet" href="styles/a11y-dark.css" />
+
+	<!-- project css-->
+	<link rel="stylesheet" href="assets/css/project-page.css">
+
+	
+
+</head>
+<body class="is-preload">
+
+	<!-- Header -->
+	<header id="header">
+		<a href="index.html" class="title">[Bernard]</a>
+		<nav>
+			<ul>
+				<li><a href="index.html#two">[Crevice Testbed]</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<section id="main" class="wrapper">
+			<div class="inner project-page">
+
+				<h1 class="major align-center">Cross-Site Scripting<span class="subtitle">Attacker-Controlled Definition of a Missing JavaScript Dependency</span></h1>
+
+				<figure class="project-hero hero-large hero-overlay">
+					<img src="images/xssMissing1_1.png" alt="Crevice Testbed XSS Missing Dependency Lab Image" />
+					<figcaption style="font-size: 11px">Figure 1: Cross-Site Scripting via Missing JavaScript Dependency</figcaption>
+				</figure>
+
+				<div class="project-tags visually-hidden">
+					<span class="tag">Application Security</span>
+					<span class="tag">Web Application</span>
+					<span class="tag">Cross-Site Scripting</span>
+					<span class="tag">JavaScript</span>
+					<span class="tag">Analysis</span>
+				</div>
+
+				<div class="project-writeup">
+					<section class="writeup-block">
+						<h2 class="writeup-title">Summary</h2>
+
+						<p class="writeup-lede">
+							This is a Cross-Site Scripting vulnerability where injected JavaScript initially fails
+							to execute because the application expects a client-side dependency that isn't present at runtime.
+							Although automated scanners may detect the reflected injection point, the generated Proof-of-Concept
+							payload doesn't execute due to the surrounding JavaScript execution context.
+						</p>
+						<p></p>
+						<p>
+							Manual analysis revealed that the page referenced the jQuery <code class="inline-code">$</code> function even though the
+							library providing it was never loaded. Because <code class="inline-code">$</code> isn't a reserved identifier in JavaScript,
+							an attacker can define the missing function themselves. By defining a custom <code class="inline-code">$()</code> function
+							within the injection, the expected dependency can be satisfied and arbitrary JavaScript execution is achieved.
+						</p>
+					</section>
+
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Why This Matters</h2>
+
+						<p>
+							Automated scanning tools often identify reflected JavaScript injection points but cannot always
+							account for the surrounding execution context. As a result, scanners may report a vulnerability while
+							generating payloads that fail to execute, leading testers to incorrectly assume that exploitation is
+							not possible.
+						</p>
+
+						<p>
+							In real-world application security assessments, exploitation often requires understanding how existing
+							client-side code behaves and adapting payloads to fit the expected syntax and runtime environment.
+							Analyzing JavaScript errors, identifying missing dependencies, and modifying payloads accordingly are
+							common steps when validating client-side injection vulnerabilities.
+						</p>
+					</section>
+
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Technical Walkthrough</h2>
+
+						<p>
+							The injection point becomes apparent when inserting common Cross-Site Scripting test payloads and
+							observing how they are reflected within the page’s JavaScript context. The initial scanner-generated
+							payload produces a syntax error because it doesn't match the structure of the surrounding code.
+						</p>
+
+						<p>
+							For example, Chrome’s developer tools console may show a syntax error when a payload like <code class="inline-code">"alert(1)//</code>
+							is injected:
+							
+						</p>
+
+						<figure class="project-hero">
+							<img src="images/MdXssError1.png" alt="JavaScript Syntax Error Image" />
+							<figcaption style="font-size: 11px">Figure 2: JavaScript syntax error caused by malformed payload</figcaption>
+						</figure>
+
+						<p>
+							The reflected injection appears inside a jQuery selector, and the surrounding code reveals the syntax
+							expected by the application.
+						</p>
+
+						<figure class="project-hero">
+							<img src="images/MdXssScript1.png" alt="First Attempt with Syntax Error Image" />
+							<figcaption style="font-size: 11px">Figure 3: Injection reflected inside existing JavaScript context</figcaption>
+						</figure>
+
+						<p>
+							To satisfy the existing syntax, the payload can be adjusted to terminate the string and execute code:
+							<code class="inline-code">");alert(1)//</code>
+						</p>
+
+						<p>
+							After correcting the syntax, the injected JavaScript still fails to execute. Inspecting the browser
+							console reveals a new runtime error indicating that the <code class="inline-code">$</code> identifier is undefined.
+						</p>
+
+						<figure class="project-hero">
+							<img src="images/MdXssError2.png" alt="Fixed JavaScript Syntax with New Error Image" />
+							<figcaption style="font-size: 11px">Figure 4: Runtime error indicating missing dependency</figcaption>
+						</figure>
+
+						<p>
+							This occurs because the page expects the jQuery library to provide the <code class="inline-code">$</code> function, but the
+							request that normally loads the dependency was never made. As a result, the identifier is undefined at
+							runtime.
+						</p>
+
+						<p>
+							Since <code class="inline-code">$</code> isn't a reserved identifier in JavaScript, it can be defined by the injected code.
+							Attempting to assign it as a variable <code class="inline-code">");var $=alert(1);//</code> results in another error:
+							
+						</p>
+
+						<figure class="project-hero hero-medium hero-overlay">
+							<img src="images/MdXssError3.png" alt="Defining $ as a variable and the returned error Image" />
+							<figcaption style="font-size: 11px">Figure 5: Application expects $ to behave as a function</figcaption>
+						</figure>
+
+						<p>
+							The error indicates that the application expects <code class="inline-code">$</code> to behave as a function rather than a
+							variable. Defining a function named <code class="inline-code">$()</code> satisfies the expected behavior and restores the
+							execution path.
+						</p>
+
+						<p>
+							The following payload defines the missing function and executes arbitrary JavaScript:
+							<code class="inline-code">");function $(){alert(1);}//</code>
+						</p>
+
+						<figure class="project-hero hero-medium hero-overlay">
+							<img src="images/xssMissing1_8.png" alt="Successfully defining $ as a function Image" />
+							<figcaption style="font-size: 11px">Figure 6: Injected code defining the missing dependency</figcaption>
+						</figure>
+
+						<p>
+							The JavaScript execution can also occur outside the function definition:
+							<code class="inline-code">");function $(){};alert(1);//</code>
+						</p>
+
+						<figure class="project-hero hero-medium hero-overlay">
+							<img src="images/MdXssAlertOutside.png" alt="Alternate injection syntax Image" />
+							<figcaption style="font-size: 11px">Figure 7: Alternate payload structure</figcaption>
+						</figure>
+
+						<p>
+							With the expected dependency now defined, the injected code executes successfully.
+						</p>
+
+						<figure class="project-hero hero-small hero-overlay">
+							<img src="images/xssalert.png" alt="Alert popup demonstrating code execution" />
+							<figcaption style="font-size: 11px">Figure 8: Successful JavaScript execution</figcaption>
+						</figure>
+					</section>
+
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Skills Demonstrated</h2>
+
+						<ul>
+							<li>Analyzing JavaScript injection within existing script contexts</li>
+							<li>Using browser developer tools to investigate runtime errors</li>
+							<li>Understanding the impact of missing client-side dependencies</li>
+							<li>Adapting XSS payloads to match surrounding JavaScript syntax</li>
+							<li>Regaining control of execution flow through attacker-defined functions</li>
+						</ul>
+
+					</section>
+
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Lessons for Application Security Testing</h2>
+
+						<p>
+							This scenario illustrates a common limitation of automated scanning tools: they can detect injection
+							points but cannot always reason about the surrounding JavaScript execution environment. When a
+							scanner-generated payload fails to execute, the vulnerability may still be exploitable with minor
+							modifications.
+						</p>
+
+						<p>
+							Manual analysis of browser console errors and client-side code often reveals the assumptions made by
+							the application’s JavaScript. Understanding those assumptions allows a tester to adapt payloads,
+							restore execution flow, and successfully validate vulnerabilities that automated tools cannot
+							exploit on their own.
+						</p>
+					</section>
+
+					</div>
+				</div>
+</section ></div >
+
+
+								<!--Footer -->
+								<footer id="footer" class="wrapper style1">
+									<div class="inner">
+										<ul class="menu">
+											<li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+											<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+											<li><a href="index.html#two">[Crevice Testbed]</a></li>
+										</ul>
+									</div>
+								</footer>
+
+								<!--Scripts -->
+									<script src="assets/js/jquery.min.js"></script>
+							<script src="assets/js/jquery.scrollex.min.js"></script>
+							<script src="assets/js/jquery.scrolly.min.js"></script>
+							<script src="assets/js/browser.min.js"></script>
+							<script src="assets/js/breakpoints.min.js"></script>
+							<script src="assets/js/util.js"></script>
+							<script src="assets/js/main.js"></script>
+
+							<!-- highlight.js -->
+							<script src="assets/js/highlight.min.js"></script>
+							<script>
+										document.addEventListener('DOMContentLoaded', () => {
+											if (window.hljs) {
+												if (typeof hljs.highlightAll === 'function') {
+												hljs.highlightAll();
+												} else {
+												document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+												}
+											}
+										});
+							</script>
+							<script>
+							document.querySelectorAll(".ioc-pill").forEach(el => {
+							el.addEventListener("click", () => {
+							navigator.clipboard.writeText(el.innerText);
+
+							el.classList.add("copied");
+
+							setTimeout(() => {
+								el.classList.remove("copied");
+								}, 1200);
+							});
+							});
+							</script>
+											<script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>

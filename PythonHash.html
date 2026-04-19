@@ -1,0 +1,218 @@
+<!DOCTYPE HTML>
+<!--
+    Hyperspace by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+    <title>Hashcat Emulation in Python</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel="stylesheet" href="assets/css/main.css?v=202548asdf-2" />
+
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+    <!-- highlight.js theme -->
+    <link rel="stylesheet" href="styles/a11y-dark.css" />
+
+    <!-- project css-->
+    <link rel="stylesheet" href="assets/css/project-page.css">
+</head>
+
+<body class="is-preload">
+
+    <!-- Header -->
+    <header id="header">
+        <a href="index.html" class="title">[Bernard]</a>
+        <nav>
+            <ul>
+                <li><a href="index.html#four">[Security Tooling]</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Main -->
+        <section id="main" class="wrapper">
+            <div class="inner project-page">
+
+                <h1 class="major align-center">A Password Hash Cracker in Python<span class="subtitle">Emulating Dictionary Attack Concepts Inspiration by Hashcat</span></h1>
+
+                <figure class="project-hero hero-medium hero-overlay">
+                    <img src="images/hashcrack.jpg" alt="Hash cracker banner image">
+                    <figcaption>&copy; No rights reserved. Image created by Google's Gemini.</figcaption>
+                </figure>
+
+
+                <div class="project-tags visually-hidden">
+                    <span class="tag">Python</span>
+                    <span class="tag">Hashcat</span>
+                    <span class="tag">Hashing</span>
+                    <span class="tag">CLI Tooling</span>
+                    <span class="tag">Password Cracking</span>
+                    <span class="tag">Dictionary Attack</span>
+                    <span class="tag">Cybersecurity Tool</span>
+                    <span class="tag">MD5</span>
+                    <span class="tag">SHA</span>
+
+
+                    <ul class="actions small">
+                        <!-- Optional: enable when you have links -->
+                        <!-- <li><a class="button small primary" href="https://github.com/USER/REPO">GitHub</a></li> -->
+                        <!-- <li><a class="button small" href="index.html#one">Back</a></li> -->
+                    </ul>
+                </div>
+
+                <div class="project-writeup">
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Summary</h2>
+                        <p class="writeup-lede">
+                            I wrote this Python project to enhance my understanding of the mechanics behind how dictionary-based password cracking tools work at a basic level and to strengthen my scripting skills, 
+                            translating that understanding into working code. The script accepts a user-selected hash type, a dictionary file of candidate passwords, and a file of hashes to crack. It then hashes each candidate
+                            password and compares the result against the supplied hash values, returning any matches it finds.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">How It Works</h2>
+                        <p>
+                            The implementation models the core workflow of a dictionary attack. A candidate password is read from the wordlist, hashed with the selected algorithm, and 
+                            then compared against each target hash in the supplied hash file. This process repeats until the wordlist has been exhausted. The script currently supports 
+                            MD5, SHA-1, SHA-224, SHA-256, and SHA-512 via Python’s <i>hashlib</i> library.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Design Decisions</h2>
+                        <ul class="writeup-bullets">
+                            <li>The wordlist is processed one line at a time instead of being loaded into memory all at once.</li>
+                            <li>This keeps memory usage low and makes the script more practical for large dictionaries.</li>
+                            <li>The hash file pointer is reset after each pass so every candidate password is compared against the full set of target hashes.</li>
+                            <li>The implementation prioritizes understanding the cracking workflow over performance optimizations such as parallel processing or indexed hash lookups.</li>
+                        </ul>
+                    </section>
+
+
+                    <section class="writeup-block callout">
+                        <h2 class="writeup-title">Future Improvements</h2>
+                        <p>
+                            Some basic input validation is already present, such as restricting supported hash type values, but there is still room to improve file validation, argument handling, and comparison logic.
+                            Professional tools like Hashcat rely heavily on acceleration via GPU parallelism to performing large numbers of hash computations simultaneously. I would like to experiment with GPU 
+                            acceleration via one of the available python libraries. 
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Python Implementation</h2>
+                        <p class="writeup-hint">
+                            Below is the Python implementation with inline comments describing the file handling, algorithm selection, and comparison logic used to emulate a dictionary-based password hash cracking workflow.
+                        </p>
+                    </section>
+                </div>
+
+
+                <div class="code-card">
+                    <pre class="highlight"><code class="language-python">
+#This script cracks MD5 and the SHA family of hashes. It accepts a number that represents the SHA hash type, a file that is a
+#dictionary of potential passwords and a file of password hashes to be cracked. It then hashes the potential passwords
+#in the dictionary file and compares them to the hashes found in the file containing passwords to crack. If a match
+#is found it returns the matches to the user. I avoid reading the entire potential password file into a list to manage
+#memory more efficiently in cases of very large files like the rockyou password file. Some input validation is
+#implemented, but future work will implement more/better input validation to practice more secure coding.
+
+import sys
+#import os.path # this will eventually be used to check that file arguments are correct os.path.exists(path) returns true/false
+import hashlib
+
+
+def getfile(z):    #reading the files in, but only one line at a time rather than into a list
+    #if os.path.isfile(z[2]):
+    with open(z[3]) as wordlist, open(z[2]) as hashes: # open the wordlist file and the file of hashes to crack
+        hashchoice = z[1]
+        notsupported = "That hashtype isn't supported yet"
+        if int(hashchoice) > 4:
+            return notsupported
+        else:
+            return process(hashes, wordlist, hashchoice) #passing files to process()
+
+
+def process(hashes, wordlist, htype):
+    hashtypes = []
+    # hashalgorithms allows to choose hash type from command line and use hashlib
+    # chosen by selecting 0-4 as first option passed to program
+    hashalgorithms = [hashlib.md5, hashlib.sha1, hashlib.sha224, hashlib.sha256, hashlib.sha512]
+    hashtype = int(htype)
+    result = []
+    hashed = ""
+
+    for wordsrow in wordlist: # runs through each word in wordlist then compares hashed value to user provided hashes
+        for hashrow in hashes:
+            hashed = hashalgorithms[hashtype](wordsrow.encode()).hexdigest() #hashes word from wordlist and stores hash
+            if hashed in hashrow: # compares hashed word to list of hashes provided
+                #appends the matching password and hash to list for printing later
+                result.append([hashed, wordsrow])   # could use rstrip() to remove \n chars, but if password has blank
+                                                    # space, would remove that too
+        hashes.seek(0)          #seeks the start of the provided hashes file
+
+    return result
+
+
+#begin program and get the final values in order to print them
+crackedpass = getfile(sys.argv) #sending the command line arguments to getfile()
+print("\n")
+if isinstance(crackedpass[0], list):
+    for x in crackedpass:
+        print('Password is: ', x[0], ":", x[1])  #printing returned values
+#this else should never get hit. Should be able to remove the if else statement and just print in the loop. 
+#if there is only one line, it will only print one line, if there are many, it will print many. 
+#check if this is true.
+else:
+    print(crackedpass)
+</code></pre>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="wrapper style1">
+        <div class="inner">
+            <ul class="menu">
+                <li>&copy; Bernard. All rights reserved.</li>
+                <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                <li><a href="index.html#four">[Security Tooling]</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+    <!-- highlight.js -->
+    <script src="assets/js/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.hljs) {
+                if (typeof hljs.highlightAll === 'function') {
+                    hljs.highlightAll();
+                } else {
+                    document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

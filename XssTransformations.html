@@ -1,0 +1,326 @@
+<!DOCTYPE HTML>
+<!--
+    Hyperspace by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+    <title>Unicode Best-Fit XSS Bypass | Bernard Santillan</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel="stylesheet" href="assets/css/main.css?v=2022353s4d8-2" />
+
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+    <!-- highlight.js theme -->
+    <link rel="stylesheet" href="styles/a11y-dark.css" />
+
+    <!-- project css-->
+    <link rel="stylesheet" href="assets/css/project-page.css">
+</head>
+<body class="is-preload">
+
+    <!-- Header -->
+    <header id="header">
+        <a href="index.html" class="title">[Bernard]</a>
+        <nav>
+            <ul>
+                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Main -->
+        <section id="main" class="wrapper">
+            <div class="inner project-page">
+
+                <h1 class="major align-center">Unicode Best-Fit XSS Bypass<span class="subtitle">Stored XSS Through Legacy Request Validation Bypass and Unicode Normalization</span></h1>
+
+                <figure class="project-hero hero-large hero-overlay">
+                    <img src="images/xssBypassValidate1_1.png" alt="Unicode Best-Fit XSS lab in Crevice Testbed" />
+                    <figcaption style="font-size: 11px">Figure 1: Unicode Best-Fit XSS lab in Crevice Testbed</figcaption>
+                </figure>
+
+                <div class="project-tags visually-hidden">
+                    <span class="tag">Application Security</span>
+                    <span class="tag">Training</span>
+                    <span class="tag">Stored XSS</span>
+                    <span class="tag">Unicode</span>
+                    <span class="tag">Request Validation</span>
+                    <span class="tag">Normalization</span>
+                    <span class="tag">ASP.NET</span>
+                    <span class="tag">Web Application</span>
+                </div>
+
+                <div class="project-writeup">
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Summary</h2>
+
+                        <p class="writeup-lede">
+                            This <a href="https://github.com/itnasb/CreviceTestbed"><em>Crevice Testbed</em></a> lab demonstrates how legacy-style request validation can be bypassed when Unicode characters are normalized to their nearest ASCII equivalent before reaching an XSS sink. The application rejects obviously dangerous input like <code class="inline-code">&lt;svg&gt;</code>, but accepts variants that look harmless enough to limp past validation. Once those characters are normalized by the application stack or database handling, they become the exact dangerous characters the validator was trying to stop in the first place.
+                        </p>
+                        <p></p>
+                        <p>
+                            That’s the problem with relying on input validation alone. The developer blocked some known-bad patterns at the front door, assumed the job was done, and skipped context-specific output encoding when the data was rendered later. Microsoft has recommended treating validation and output encoding as separate controls for a long time. This lab shows why. One tries to reduce bad input. The other keeps surviving input from becoming executable. You want both. Betting everything on the first one is how weird Unicode turns into script execution.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Lab Objectives</h2>
+
+                        <ul>
+                            <li>Confirm that a basic <code class="inline-code">&lt;script&gt;</code> tag is rejected by legacy request validation</li>
+                            <li>Show that <code class="inline-code">&lt;%script&gt;</code> is accepted despite still behaving like tag input</li>
+                            <li>Inspect the DOM and confirm injected markup reaches the page</li>
+                            <li>Test whether Unicode normalization converts diacritic characters into standard ASCII equivalents</li>
+                            <li>Use full-width Unicode angle brackets to bypass validation and achieve JavaScript execution</li>
+                            <li>Observe that missing output encoding is what turns the validation bypass into actual XSS</li>
+                        </ul>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Technical Walkthrough</h2>
+
+                        <p>
+                            The lab begins with a simple input test where the user checks for basic reflection using a string <code class="inline-code">d34db33f</code> and observes the reflection. Testing further, they enter a basic <code class="inline-code">&lt;script&gt;</code> tag and submit it.
+                        </p>
+                        <p>
+                            The application rejects the input and returns the message <code class="inline-code">Rejected by legacy request validation</code>. At a glance, that looks reassuring. The server appears to recognize obvious tag input and block it before it reaches the page.
+                        </p>
+
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/xssBypassValidate1_2.png?asfa=asdfa" alt="A basic svg payload is rejected by legacy request validation" />
+                            <figcaption style="font-size: 11px">Figure 2: A basic script payload is rejected by legacy request validation</figcaption>
+                        </figure>
+
+                        <p>
+                            Next, slightly modify the input and submit <code class="inline-code">&lt;%script&gt;</code> instead.
+                        </p>
+
+                        <p></p>
+                        <p>
+                            This time the input is accepted. This matters because it shows the filter pattern matching against a narrower idea of what dangerous input looks like. The application isn’t reasoning about how the data might later be transformed. It’s just rejecting what it recognizes and waving through what it doesn’t.
+
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/xssBypassValidate1_3.png" alt="A modified tag-like payload is accepted by the validator" />
+                            <figcaption style="font-size: 11px">Figure 3: A modified tag-like payload is accepted by the validator</figcaption>
+                        </figure>
+
+                        <p>
+                            The filter has been bypassed but the element isn't rendered as HTML as can be observed in the vulnerable sink where input is visible in the UI.
+                        </p>
+                        <p>
+                            The next step is to test Unicode characters that may be normalized into ordinary ASCII letters. Use a payload like <code class="inline-code">&lt;śvg&gt;</code> and observe what happens after the value is processed and rendered.
+                        </p>
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/xssBypassValidate1_7.png" alt="Browser developer tools show user-controlled markup reaching the DOM" />
+                            <figcaption style="font-size: 11px">Figure 4: Browser developer tools show user-controlled markup reaching the DOM</figcaption>
+                        </figure>
+                        <p>
+                            The injected content appears in the DOM and breaks the rest of the app, which confirms that special characters capable of shaping markup are reaching the rendered page. Even though the original payload doesn’t execute, the application has already shown its hand. User-controlled input is getting inserted into an HTML context without being safely encoded for that context.
+                        </p>
+                        <p>
+                            The important detail here is that the <code class="inline-code">ś</code> character can be transformed into a standard <code class="inline-code">S</code> during best-fit or compatibility-style normalization. That means input that doesn’t look like <code class="inline-code">&lt;script&gt;</code> to the validator may still become <code class="inline-code">&lt;script&gt;</code> by the time the browser receives it. The validator inspects one form of the data. The server returns another. Then the browser renders and executes it. That’s not a great arrangement.
+                        </p>
+
+                        <p>
+                            The following can be used to bypass input validation and will be normalized before being returned to the vulnerable sink: <code class="inline-code">&lt;śvg onload=alert(1)&gt;</code>
+                        </p>
+
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/xssBypassValidate1_10.png" alt="A diacritic character is normalized into its ASCII equivalent during processing and the resulting HTML is rendered" />
+                            <figcaption style="font-size: 11px">Figure 5: A diacritic character is normalized into its ASCII equivalent and the resulting HTML is rendered</figcaption>
+                        </figure>
+
+                        <p>Note that this other payload would also be transformed and successfully execute: <br /> <code class="inline-code">&lt;ímg src=1 onerror=alert(1)&gt;</code></p>
+
+                        <p>
+                            This is the key moment in the lab. The validator didn’t stop the payload because the dangerous form of the input didn’t exist yet. It only came into existence after later processing normalized the characters into their ASCII equivalents. And because the application rendered the resulting data into HTML without output encoding, execution followed naturally.
+                        </p>
+                        <p>There is more to discover though.</p>
+                        <p>
+                            After confirming that letter normalization occurs, try full-width angle brackets. Submit the following:<br /><code class="inline-code">＜script＞alert(1)＜/script＞</code>
+                        </p>
+
+                        <p>
+                            These full-width Unicode characters aren’t the standard ASCII <code class="inline-code">&lt;</code> and <code class="inline-code">&gt;</code> characters the legacy validator expects. Because of that, the payload is accepted. But after normalization, the full-width brackets are converted into ordinary angle brackets, producing a real script tag and bypassing the check on closing tags that prevented the earlier PoC from executing.
+                        </p>
+
+                        <p>
+                            At that point the browser does what browsers do. The payload executes . . . <!--Boomer Ellipses!-->
+                        </p>
+
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/xssBypassValidate1_13.png" alt="Full-width Unicode brackets bypass validation and are normalized into a working script tag" />
+                            <figcaption style="font-size: 11px">Figure 6: Full-width Unicode brackets bypass validation and are normalized into a working script tag</figcaption>
+                        </figure>
+
+
+
+                        <p>
+                            Happily.
+                        </p>
+
+                        <figure class="project-hero hero-large hero-overlay">
+                            <img src="images/xssBypassValidate1_12.png" alt="The normalized payload executes and triggers JavaScript in the browser" />
+                            <figcaption style="font-size: 11px">Figure 7: The normalized payload executes and triggers JavaScript in the browser</figcaption>
+                        </figure>
+
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">The Logic Failure</h2>
+
+                        <p>
+                            The root problem isn’t just that legacy request validation missed a few Unicode tricks. The deeper problem is that the application trusted input validation to carry the full security burden for HTML rendering.
+                        </p>
+                        <p>That's not enough.</p>
+                        <p>
+                            It's useful for validation to reject known-bad patterns. But validation is always operating on a guess about what dangerous input will look like at the moment it inspects it, and better used for business logic than security. Once later processing changes the data through normalization, transformation, decoding, or storage behavior, that guess can become wrong very quickly.
+                        </p>
+                        <p>That’s what happens here.</p>
+                        <p>The failure sequence looks like this:</p>
+                        <ul>
+                            <li>Legacy request validation blocks only obvious dangerous patterns</li>
+                            <li>Slightly altered tag-like input is allowed through</li>
+                            <li>Unicode characters survive input validation</li>
+                            <li>Application or database-layer normalization converts them to ASCII equivalents</li>
+                            <li>The resulting value is rendered into HTML without context-specific output encoding</li>
+                            <li>Browser-executable markup is created and JavaScript runs</li>
+                        </ul>
+
+                        <p>
+                            The validator looked at one version of the input. The browser received another. And because the final output wasn’t encoded for the HTML context, the application turned normalization behavior into an exploit path.
+                        </p>
+
+                        <p>
+                            What makes this class of issue especially annoying is that those transformations may come from more than one place. Sometimes the behavior comes from legacy .NET handling. Sometimes it comes from database configuration, collation, or character-conversion behavior. Sometimes it’s a combination of both, which means the dangerous transformation doesn’t live neatly in one obvious layer of the stack. That can make the bug harder to trace and harder to fully eliminate through configuration or validation changes alone.
+                        </p>
+
+                        <p>
+                            That’s exactly why output encoding is essential. Even when upstream validation is imperfect, inconsistent, or working against transformations introduced elsewhere, proper context-specific output encoding still prevents the browser from treating the final value as executable markup. Validation may reduce bad input. Output encoding is what keeps surviving input from becoming a problem.
+                        </p>
+
+                        <p>
+                            A safer design would assume that validation is only one control in the chain, not the whole plan:
+                        </p>
+
+                        <ul>
+                            <li>Treat Unicode and normalization behavior as part of the attack surface</li>
+                            <li>Avoid relying on blacklist-style request validation as the primary XSS defense</li>
+                            <li>Assume stored input may change form before display, even if it looked harmless at submission time</li>
+                            <li>Validate input for business rules, but encode all output for the context where it appears in the DOM</li>
+                            <li>Apply context-specific output encoding whenever user-controlled data is rendered into HTML</li>
+                        </ul>
+                        <p>
+                            Otherwise you’re trusting every upstream transformation layer to behave exactly how your validator imagined. That’s optimistic in a way security work rarely rewards.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Key Takeaways</h2>
+
+                        <ul>
+                            <li>Input validation alone isn’t a reliable XSS defense</li>
+                            <li>Unicode normalization can change apparently safe input into dangerous markup later in the processing chain</li>
+                            <li>Legacy validation logic often inspects only obvious ASCII forms of dangerous input</li>
+                            <li>Those transformations may come from legacy .NET behavior, database configuration, or both</li>
+                            <li>That makes this class of issue harder to trace and not always easy to fix in one place</li>
+                            <li>If user-controlled data is rendered into HTML without output encoding, bypassing validation may be all an attacker needs</li>
+                            <li>Stored input should be evaluated based on how it’s rendered, not just how it looked when it was submitted</li>
+                            <li>Microsoft’s recommendation to pair validation with context-specific output encoding exists for a reason</li>
+                            <li>When multiple layers can transform input, output encoding becomes the stopgap, defense-in-depth control you really can't skip</li>
+                        </ul>
+                    </section>
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">References</h2>
+                        <ul class="writeup-bullets">
+                            <li>
+                                <a href="https://en.wiktionary.org/wiki/Appendix:Variations_of_%22s%22" target="_blank" rel="noopener noreferrer">
+                                    Wiktionary Appendix: Variations of "s"
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://en.wiktionary.org/wiki/Appendix:Variations_of_%22i%22" target="_blank" rel="noopener noreferrer">
+                                    Wiktionary Appendix: Variations of "i"
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://en.wikipedia.org/wiki/List_of_Unicode_characters" target="_blank" rel="noopener noreferrer">
+                                    Wikipedia: List of Unicode characters
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://www.compart.com/en/unicode/U+FF1C" target="_blank" rel="noopener noreferrer">
+                                    Compart Unicode reference: FULLWIDTH LESS-THAN SIGN (U+FF1C)
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://www.compart.com/en/unicode/U+FF1E" target="_blank" rel="noopener noreferrer">
+                                    Compart Unicode reference: FULLWIDTH GREATER-THAN SIGN (U+FF1E)
+                                </a>
+                            </li>
+                        </ul>
+                    </section>
+
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="wrapper style1">
+        <div class="inner">
+            <ul class="menu">
+                <li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+                <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+                <li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+    <!-- highlight.js -->
+    <script src="assets/js/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.hljs) {
+                if (typeof hljs.highlightAll === 'function') {
+                    hljs.highlightAll();
+                } else {
+                    document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+                }
+            }
+        });
+    </script>
+    <script>
+        document.querySelectorAll(".ioc-pill").forEach(el => {
+            el.addEventListener("click", () => {
+                navigator.clipboard.writeText(el.innerText);
+
+                el.classList.add("copied");
+
+                setTimeout(() => {
+                    el.classList.remove("copied");
+                }, 1200);
+            });
+        });
+    </script>
+    <script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>

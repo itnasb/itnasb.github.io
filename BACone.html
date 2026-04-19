@@ -1,0 +1,316 @@
+<!DOCTYPE HTML>
+<!--
+    Hyperspace by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+    <title>Crevice Testbed Vulnerable WebApp</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel="stylesheet" href="assets/css/main.css?v=2022353s4d8-2" />
+
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+    <!-- highlight.js theme -->
+    <link rel="stylesheet" href="styles/a11y-dark.css" />
+
+    <!-- project css-->
+    <link rel="stylesheet" href="assets/css/project-page.css">
+</head>
+<body class="is-preload">
+
+    <!-- Header -->
+    <header id="header">
+        <a href="index.html" class="title">[Bernard]</a>
+        <nav>
+            <ul>
+                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Main -->
+        <section id="main" class="wrapper">
+            <div class="inner project-page">
+
+                <h1 class="major align-center">Broken Access Control<span class="subtitle">Inverted Authorization Logic and Fail-Open Input Handling</span></h1>
+
+                <figure class="project-hero hero-large hero-overlay">
+                    <img src="images/bac1_1.png" alt="Broken Access Control lab in Crevice Testbed" />
+                    <figcaption style="font-size: 11px">Figure 1: Broken Access Control lab in Crevice Testbed</figcaption>
+                </figure>
+
+                <div class="project-tags visually-hidden">
+                    <span class="tag">Application Security</span>
+                    <span class="tag">Training</span>
+                    <span class="tag">Broken Access Control</span>
+                    <span class="tag">Authorization</span>
+                    <span class="tag">Web Application</span>
+                </div>
+
+                <div class="project-writeup">
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Summary</h2>
+
+                        <p class="writeup-lede">
+                            This lab demonstrates a Broken Access Control flaw caused by inverted authorization logic and a fail-open design tied to a user controllable URL parameter.
+                            The application has already performed a server-side authorization check and determined that the user should not have access, but instead of enforcing that decision directly,
+                            it passes control to a second layer of logic that relies on a URL parameter to decide what the user should see.
+                        </p>
+                        <p></p>
+                        <p>
+                            That secondary logic handles a few expected values safely, but anything unexpected falls through to the protected application.
+                            The result is a simple access control failure: the application correctly decides the user is unauthorized, then quietly talks itself out of it.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Lab Objectives</h2>
+
+                        <ul>
+                            <li>Identify authorization logic that relies on user controllable input</li>
+                            <li>Recognize how inverted or blacklist-style checks can fail open</li>
+                            <li>Understand why access decisions must be enforced server-side</li>
+                            <li>Observe how unexpected input can bypass logic that only handles expected cases</li>
+                        </ul>
+                        <p>
+                            The vulnerability is easy to trigger. The bypass doesn’t require browser wizardry or a proxy, but the root cause deserves consideration. It asks the tester to stay curious from a fully unauthorized perspective. I originally found this issue while waiting for access during an assessment. The team was still working through permissions, so I started testing the access denied page and noticed that the auth parameter was user controllable. That was enough to turn a “please wait while we fix your access” moment into a useful finding.
+                            </p><p>
+                            The important lesson is not that an unexpected auth value reaches the application. It’s that the application had already decided the user was unauthorized, then handed control to a second layer of flawed logic built around a user-controllable parameter. Understanding that design failure is the point of the lab.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Technical Walkthrough</h2>
+
+                        <p>
+                            In this lab, the user is not supposed to be able to access the application. The application performs a server-side check first and determines that the user is unauthorized.
+                            So far, so good.
+                        </p>
+
+                        <p>
+                            Instead of directly returning an access denied response and ending the request, the application makes a strange design choice: it uses a URL parameter named
+                            <strong>auth</strong> to decide whether to display the denial message or the application itself.
+                        </p>
+
+                        <p>
+                            The problem is that the logic responsible for handling the <strong>auth</strong> parameter is inverted and incomplete.
+                            Instead of positively enforcing access, it attempts to block a few known bad states.
+                            That approach works right up until it doesn't.
+                        </p>
+
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/bac1_6.png" alt="Unauthorized access message in the Broken Access Control lab" />
+                            <figcaption style="font-size: 11px">Figure 2: The application's intended unauthorized response</figcaption>
+                        </figure>
+
+                        <p>
+                            First, inspect the URL and identify the <code class="inline-code">auth</code> parameter.
+                        </p>
+                        <p>Next test expected values such as <code class="inline-code">false</code>, <code class="inline-code">true</code>, and empty input</p>
+
+                        <ul>
+                            <li><code class="inline-code">auth=false</code> returns the access denied message</li>
+                            <li><code class="inline-code">auth=true</code> also returns the access denied message</li>
+                            <li><code class="inline-code">auth=</code> an empty value also returns the access denied message</li>
+                        </ul>
+
+                        <p>
+                            At a glance, that may look defensive. It isn't. It's just narrowly defensive.
+                            The code accounts for a few expected values and assumes that covers the problem.
+                        </p>
+
+                        <p>
+                            When the user supplies any other value, such as:
+                            <code class="inline-code">auth=anyOtherString</code>
+                            the request falls through the conditional logic and loads the protected application.
+                        </p>
+                        <ul>
+                        <li>Modify the parameter to an unexpected value and observe the change in behavior</li>
+                        <li>Confirm that access is granted without any meaningful secondary authorization enforcement</li>
+                        </ul>
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/bac1_3.png" alt="Unexpected auth value bypassing access control" />
+                            <figcaption style="font-size: 11px">Figure 3: An unexpected parameter value falls through to the protected page</figcaption>
+                        </figure>
+
+                        <p>
+                            The protected functionality itself is a small phishing sentiment tracking application where a user can enter campaign response messages and score them from
+                            <code class="inline-code">0</code> to <code class="inline-code">3</code>, with <code class="inline-code">0</code> representing a kind response and <code class="inline-code">3</code> representing an overtly aggressive one.
+                        </p>
+
+                        <p>
+                            The sentiment tracker is unimportant. More importantly, no additional meaningful server-side authorization check prevents access once the request reaches this page.
+                            If there is another check later in the flow, it's built on the same flawed fall-through pattern.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Why the Logic Fails</h2>
+
+                        <p>
+                            The root problem is that the application already knows the user is unauthorized, but it doesn't enforce that decision directly.
+                            Instead, it translates that result into a user visible and user controllable parameter, then trusts follow-on logic to interpret it correctly.
+                            That's where things go sideways.
+                        </p>
+
+                        <p>
+                            A more secure approach would look something like this:
+                        </p>
+
+<pre><code class="language-javascript">if (isAuthorized === true) {
+    return theAdminPage;
+} else {
+    return accessNotAuthorized;
+}</code></pre>
+
+                        <p>
+                            That logic is explicit, positive, and final. If the user isn't authorized, the request ends there.
+                        </p>
+
+                        <p>
+                            The flawed design in this lab behaves more like this:
+                        </p>
+
+<pre><code class="language-javascript">if (isAuthorized === false) {
+    return "auth=false";
+}
+
+if (auth === "false") {
+    return accessNotAuthorized;
+} else if (auth === "true") {
+    return accessNotAuthorized;
+} else if (auth === "") {
+    return accessNotAuthorized;
+}
+
+// anything else falls through
+return theAdminPage;</code></pre>
+
+                        <p>
+                            There are a few problems packed into this pattern.
+                        </p>
+
+                        <ul>
+                            <li>The original authorization decision isn't treated as final</li>
+                            <li>A user controllable parameter becomes part of the access decision</li>
+                            <li>The logic is blacklist-style and only blocks a few expected values</li>
+                            <li>Unexpected input is not denied by default and instead results in access</li>
+                        </ul>
+
+                        <p>
+                            This is why fail-open authorization logic is dangerous, especially when it's built around blacklisting expected values. 
+                            The code doesn't need to explicitly grant access. It only needs to miss one unexpected state and allow the request to fall through.
+                        </p>
+
+                        <p>
+                            This was the work of someone who knew an authorization check was needed, but didn't fully understand how to carry that decision 
+                            through the rest of the application securely. Unfortunately, access control is one of the worst places to be almost right.
+                        </p>
+                        <p>
+                            The lesson here isn't just that the parameter can be manipulated. It's that the application should never have delegated access control logic to that parameter in the first place.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Key Takeaways</h2>
+
+                        <ul>
+                            <li>Authorization decisions should be enforced server-side and treated as final</li>
+                            <li>User controllable input should never determine whether protected functionality is exposed</li>
+                            <li>Blacklist-style checks are brittle because they only handle anticipated cases</li>
+                            <li>Unexpected input should be denied by default, not allowed to fall through</li>
+                            <li>A correct authorization result can still lead to compromise if later logic reinterprets it unsafely</li>
+                        </ul>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">A Lesson for Developers</h2>
+
+                        <p>
+                            A common mistake is thinking that handling a few known values is equivalent to enforcing security.
+                            It isn't. Security logic has to be correct for unexpected input too, because unexpected input is where attackers live.
+                        </p>
+
+                        <p>
+                            In this case, the developer safely handled several obvious parameter states and still produced a Broken Access Control vulnerability because the design denied only what was anticipated rather than allowing only what was explicitly authorized.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Side Note</h2>
+
+                        <p>
+                            Although it's not the main point of this lab, the application's <i>Admin</i> functionality feeds data into report behavior used elsewhere in Crevice Testbed.
+                            One related lab includes a vulnerable sink that renders one piece of stored input without proper output encoding. The combined behaviors result in stored XSS.
+                        </p>
+
+                        <p>
+                            That means this Broken Access Control issue doesn't just expose an administrative-style workflow. In a broader application context, it can also become a stepping 
+                            stone to client-side code execution when attacker controlled data entered here is later rendered unsafely in downstream functionality.
+                        </p>
+
+                    </section>
+
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="wrapper style1">
+        <div class="inner">
+            <ul class="menu">
+                <li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+                <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+                <li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+    <!-- highlight.js -->
+    <script src="assets/js/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.hljs) {
+                if (typeof hljs.highlightAll === 'function') {
+                    hljs.highlightAll();
+                } else {
+                    document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+                }
+            }
+        });
+    </script>
+    <script>
+        document.querySelectorAll(".ioc-pill").forEach(el => {
+            el.addEventListener("click", () => {
+                navigator.clipboard.writeText(el.innerText);
+
+                el.classList.add("copied");
+
+                setTimeout(() => {
+                    el.classList.remove("copied");
+                }, 1200);
+            });
+        });
+    </script>
+    <script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+	<title>Jquery in KEV List</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+	<link rel="stylesheet" href="assets/css/main.css?v=202548-2" />
+
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+	<!-- highlight.js theme -->
+	<link rel="stylesheet" href="styles/a11y-dark.css" />
+
+	<!-- project css-->
+	<link rel="stylesheet" href="assets/css/project-page.css">
+
+</head>
+<body class="is-preload">
+
+	<!-- Header -->
+	<header id="header">
+		<a href="index.html" class="title">[Bernard]</a>
+		<nav>
+			<ul>
+				<li><a href="index.html#two">[Application Security]</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<section id="main" class="wrapper">
+			<div class="inner project-page">
+				<h1 class="major align-center">A BCheck for jQuery Version Lower Than 3.5</h1>
+
+				<figure class="project-hero hero-small">
+					<img src="images/updatejquery.png" alt="jQuery illustration" />
+					<figcaption style="font-size: 13px">&copy; Bernard Santillan</figcaption>
+				</figure>
+
+
+				<!-- Optional hidden tags for crawlers (no visual space) -->
+				<div class="project-tags visually-hidden">
+					<span class="tag">Burp Suite</span>
+					<span class="tag">BCheck</span>
+					<span class="tag">jQuery</span>
+					<span class="tag">Web Security Testing</span>
+				</div>
+
+
+
+
+
+				<div class="project-writeup">
+					<!-- TEMPLATE NOTE:
+			Replace the placeholder text below with your real project writeup.
+			Delete any sections you don't need.
+		-->
+					<section class="writeup-block">
+						<h2 class="writeup-title">Summary</h2>
+						<p class="writeup-lede">
+							This Burp Suite BCheck was written to identify applications using jQuery versions below 3.5. I created it following CISA’s addition to the Known Exploited Vulnerabilities catalog.
+							The goal of the check was to quickly surface these dependencies during testing and make those findings difficult to ignore.
+						</p><p></p>
+						<p>
+							This iteration is intentionally simple and geared toward demonstration. It looks for version strings in HTTP responses that suggest jQuery is present and below 3.5, then raises a finding to draw attention to the issue.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Technical Rationale</h2>
+						<p>
+							Burp Suite labels outdated JavaScript dependencies as low severity, which often leads to them being ignored. However, Federal Civilian Executive Branch (FCEB) agencies must remediate jQuery vulnerabilities in versions below 3.5.0 by February 13, 2025.
+							So, I created this BCheck to streamline detection. It passively flags jQuery versions on the KEV list as I browse an application and raises the severity to high so the issue stands out during testing and remediation discussions.
+						</p>
+
+						<p>
+							This works because jQuery versions are frequently exposed in JavaScript comments, banner text, or response bodies. Since that information is often delivered to the browser unchanged, passive detection is straightforward.
+							While this does not prove exploitability, CISA guidance requires remediation regardless. The check simply highlights responses that likely contain outdated jQuery versions so they can be addressed quickly.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Detection Strategy</h2>
+						<p>
+							The check runs passively against responses and searches for strings that indicate jQuery is present along with a version number below 3.5. It looks for several naming patterns, including common forms such as:
+						</p>
+
+						<ul class="writeup-bullets">
+							<li> jQuery vX.Y.Z</li>
+							<li> jQuery JavaScript Library vX.Y.Z</li>
+							<li> jQuery v@X.Y.Z</li>
+						</ul>
+						<p>
+
+							If a matching pattern is identified and the version appears to fall below 3.5, the BCheck raises a finding indicating that an outdated jQuery version is in use and should be updated or mitigated.
+							</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">Limitations</h2>
+						<p>
+                        This demonstration version is intentionally narrow and does not catch all possible cases. It only looks for a limited set of version-string patterns. jQuery version references are not always presented consistently, so alternative naming conventions are missed.
+
+						Second, this version does not detect jQuery when it is loaded via a &lt;script&gt; tag reference rather than exposed directly in the response body. That means depending on scan scope, applications relying on external or separately loaded jQuery files may not be flagged by this check.
+						More broadly, the check is only as good as the strings it can see. Minified code, altered banners, removed version text, or custom packaging can all prevent detection.
+						</p>
+					</section>
+
+					<section class="writeup-block">
+						<h2 class="writeup-title">BCheck Implementation</h2>
+						<p class="writeup-hint">
+							Below is the compact BCheck implementation with inline comments explaining the detection logic.
+						</p>
+					</section>
+				</div>
+
+				<div class="code-card">
+					<pre class="highlight pre-shadow"><code class="bcheck">
+/*
+This BCheck was written to detect jQuery version 3.4 &amp; below after CISA put it in the known exploited vulnerabilities (KEV) catalog.
+To draw attention &amp; ensure updating, it marks the issue as a high severity rather than Burp Suite's typical informational severity.
+There is a potential problem in the regex where versions 3.45.0-3.49.99 won't cause the rule to alert. This shouldn't be a problem as
+jQuery appears to have abandoned double digit version numbering beginning in verion 2.
+*/
+
+metadata:
+  language: v2-beta
+  name: "jQuery version below 3.5"
+  description: "v1.4 Checks if jQuery is in use and if it is not 3.5 or above. jQuery version below 3.5 must be updated or have mitigations put in place before 2/13/25"
+  tags: "passive"
+  author: "Bernard Santillan"
+
+given response then
+
+	if (latest.response) matches "jQuery v[0-3]\.[0-4]{1, 2}\.[0-9]{1,2}"
+	or (latest.response) matches "jQuery JavaScript Library v[0-3]\.[0-4]{1, 2}\.[0-9]{1,2}"
+	or (latest.response) matches "jQuery v@[0-2]\.[0-9]{1,2}\.[0-9]{1,2}]"
+	or (latest.response] matches "jQuery v@[3]\.[0-4]{1,2}\.[0-9]{1,2}" then
+
+		report issue:
+		severity: high
+		confidence: certain
+		detail: "jQuery version below 3.5 in use. This version is on CISA's KEV list and must be updated or mitigated per Cisa guidance "
+		remediation: "Update Query to 3.5 or greater or implement DomPurify per vendor guidance"
+	end if
+</code></pre>
+
+				</div>
+			</div>
+
+		</section>
+
+
+	</div>
+
+	<!-- Footer -->
+	<footer id="footer" class="wrapper style1">
+		<div class="inner">
+			<ul class="menu">
+				<li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+				<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+				<li><a href="index.html#two">[Application Security]</a></li>
+			</ul>
+		</div>
+	</footer>
+
+	<!-- Scripts -->
+	<script src="assets/js/jquery.min.js"></script>
+	<script src="assets/js/jquery.scrollex.min.js"></script>
+	<script src="assets/js/jquery.scrolly.min.js"></script>
+	<script src="assets/js/browser.min.js"></script>
+	<script src="assets/js/breakpoints.min.js"></script>
+	<script src="assets/js/util.js"></script>
+	<script src="assets/js/main.js"></script>
+
+	<!-- highlight.js -->
+	<script src="assets/js/highlight.min.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			if (window.hljs) {
+				if (typeof hljs.highlightAll === 'function') {
+					hljs.highlightAll();
+				} else {
+					document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+				}
+			}
+		});
+	</script>
+	<script src="assets/js/custom-hljs.js?asdfa1234"></script>
+</body>
+</html>
