@@ -6,7 +6,7 @@
 -->
 <html>
 <head>
-    <title>SQL Injection Leading to Script-Context XSS</title>
+    <title>SQLi Leading to XSS</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 
@@ -125,7 +125,7 @@
                             client-side table using the query results.
                         </p>
                         <figure class="project-hero hero-medium hero-overlay">
-                            <img src="images/sqliplus1_3.png" alt="Image of the rendered table as the result of a successful query" />
+                            <img src="images/SQLiplus1_3.png" alt="Image of the rendered table as the result of a successful query" />
                             <figcaption style="font-size: 13px">
                                 Figure 3. The rendered table as the result of a successful query
                             </figcaption>
@@ -145,7 +145,7 @@
                         </p>
                     </section>
                     <figure class="project-hero hero-large hero-overlay">
-                        <img src="images/sqliplus1_6.png" alt="Image of successful SQL injection generating an error response that returns database version information" />
+                        <img src="images/SQLiplus1_6.png" alt="Image of successful SQL injection generating an error response that returns database version information" />
                         <figcaption style="font-size: 13px">
                             Figure 4. Successful SQLi generating an error response that returns database version information
                         </figcaption>
@@ -224,7 +224,7 @@
 
 
                     <figure class="project-hero hero-medium hero-overlay">
-                        <img src="images/sqliplus1_7.png" alt="JavaScript error caused by a SQL injection" />
+                        <img src="images/SQLiplus1_7.png" alt="JavaScript error caused by a SQL injection" />
                         <figcaption style="font-size: 13px">
                             Figure 5. A JavaScript error is caused by the SQL injection syntax
                         </figcaption>
@@ -280,7 +280,7 @@
                             and injects a new one, ensuring execution occurs in a clean JavaScript context.
                         </p>
                         <figure class="project-hero hero-medium hero-overlay">
-                            <img src="images/sqliplus1_12.png" alt="Image of the HTML and JavaScript resulting from the successful compound injection" />
+                            <img src="images/SQLiplus1_12.png" alt="Image of the HTML and JavaScript resulting from the successful compound injection" />
                             <figcaption style="font-size: 13px">
                                 Figure 6. The HTML and JavaScript resulting from the successful compound injection
                             </figcaption>
@@ -355,7 +355,7 @@
                         <p> Automated scanners configured to test for SQLi would likely have identified this parameter as <i>potentially</i> vulnerable. The database error behavior provides a strong indication of SQL injection, and basic input manipulation confirms that the query structure is being affected. </p>
                         <p> The Cross-site Scripting issue introduces an additional constraint. While a scanner may identify indicators of SQL injection, XSS exploitation depends on reaching a specific execution path that is only accessible after a successful SQL injection that returns true. </p>
                         <figure class="project-hero hero-large hero-overlay">
-                            <img src="images/sqliplus1_13.png" alt="Image of a failed XSS attempt due to the SQL query returning false" />
+                            <img src="images/SQLiplus1_13.png" alt="Image of a failed XSS attempt due to the SQL query returning false" />
                             <figcaption style="font-size: 13px">
                                 Figure 8. A failed XSS attempt due to the SQL query returning false
                             </figcaption>
@@ -407,7 +407,7 @@
                     </section>
 
                     <figure class="project-hero hero-medium hero-overlay">
-                        <img src="images/sqliplus1_11.png" alt="Image of broken application rendering resulting from the successful compound injection in Crevice Testbed" />
+                        <img src="images/SQLiplus1_11.png" alt="Image of broken application rendering resulting from the successful compound injection in Crevice Testbed" />
                         <figcaption style="font-size: 13px">
                             Figure 9. Broken application rendering resulting from the successful compound injection in Crevice
                         </figcaption>
