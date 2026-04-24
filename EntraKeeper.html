@@ -1,0 +1,243 @@
+<!DOCTYPE HTML>
+<!--
+    Hyperspace by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+    <title>EntraKeeper</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel="stylesheet" href="assets/css/main.css?" />
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+    <!-- highlight.js theme -->
+    <link rel="stylesheet" href="styles/a11y-dark.css" />
+
+    <!-- project css -->
+    <link rel="stylesheet" href="assets/css/project-page.css" />
+</head>
+<body class="is-preload">
+
+    <!-- Header -->
+    <header id="header">
+        <a href="index.html" class="title">[Bernard]</a>
+        <nav>
+            <ul>
+                <li><a href="index.html#four">[Security Tooling]</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Main -->
+        <section id="main" class="wrapper">
+            <div class="inner project-page">
+
+                <h1 class="major align-center">
+                    EntraKeeper
+                    <span class="subtitle">Maintaining authenticated state during Burp Suite audit-only scans</span>
+                </h1>
+
+                <figure class="project-hero hero-medium hero-overlay">
+                    <img src="images/EntraKeeper_1.png" alt="EntraKeeper Burp Suite extension interface for refreshing authenticated session state" />
+                    <figcaption style="font-size: 13px">
+                        Figure 1. EntraKeeper automating reauthentication through Burp Suite's built-in Chromium browser <br />&copy; No rights reserved. Image created by ChapGPT.
+                    </figcaption>
+                </figure>
+
+                <div class="project-tags visually-hidden">
+                    <span class="tag">Burp Suite</span>
+                    <span class="tag">Java Extension</span>
+                    <span class="tag">Playwright</span>
+                    <span class="tag">Entra ID</span>
+                    <span class="tag">Authenticated Scanning</span>
+                    <span class="tag">Session Management</span>
+                    <span class="tag">Montoya API</span>
+                </div>
+
+                <div class="project-writeup">
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Summary</h2>
+                        <p class="writeup-lede">
+                            EntraKeeper is a Burp Suite Java extension built to keep audit-only scans authenticated when applications use Entra ID and rely on session cookies for authenticated state. In these applications, Burp can begin with a valid session, but that state eventually expires. Once it does, requests start failing, coverage drops, and scan results become less reliable.
+                        </p><p></p>
+                        <p>
+                            The extension solves that by using Playwright to automate Burp Suite's built-in Chromium browser through the application's recorded login flow. It follows the Entra ID authentication sequence, returning to the application's landing page, and sends that traffic through Burp's proxy so Burp's cookie jar is updated with fresh session cookies.
+                        </p>
+                        <p>
+                            The result is a more reliable way to maintain authenticated state during long-running audit-only scans against modern applications that depend on externally managed authentication and cookie-based sessions.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Project Status</h2>
+                        <p>
+                            This is a placeholder project for when I eventually rebuild the extension for public use.
+                        </p>
+                    </section>
+
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">The Problem</h2>
+
+                        <p>
+                            BurpSuite handles session state well during a crawl and audit scan, but scanning via a crawler results in reduced coverage. In contrast, a manually mapped audit-only scan can increase converage but session state for applications where authentication is performed via EntraID isn't maintained.
+                        </p>
+                        <p>
+                            Applications that use Entra ID often complete authentication through a browser-based redirect flow and then issue one or more session cookies that the application uses to track authenticated state.
+                        </p>
+                        <p>
+                            In an audit-only scan, those cookies may stay valid for minutes or for hours, but they eventually expire. Once that happens, requests start quietly failing unless the session is renewed.
+                        </p>
+                        <p>
+                            That creates a few practical problems:
+                        </p>
+                        <ul class="writeup-bullets">
+                            <li>authenticated coverage drops mid-scan</li>
+                            <li>stale cookies remain in circulation until something replaces them</li>
+                            <li>requests start failing as the session ages out</li>
+                            <li>scan results become less reliable</li>
+                            <li>testers may not immediately realize the scan is no longer meaningfully authenticated</li>
+                        </ul>
+                        <p>
+                            This eliminates the benefit of increased coverage that manual mapping and audit-only scanning provide.
+                        </p>
+                        <p>
+                            A tester can manually open the browser and reauthenticate, renewing the cookies stored in BurpSuite's cookie jar. But if a session expires over night, or in other off-work hours, it's unlikely to be caught.
+                        </p>
+                        <p>
+                            EntraKeeper exists in the gap between starting a manually mapped audit-only scan authenticated and keeping it authenticated. 
+                            It treats session renewal as part of scan quality not just about convenience. It's about preserving coverage and keeping Burp operating against the authenticated application state the tester intended to assess.
+                        </p>
+                        <p>
+                            It also reflects engineering work that matters in application security but doesn't always get highlighted: building the tooling needed to test modern applications well, not just using existing tools as-is.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Approach</h2>
+                        <p>
+                            EntraKeeper solves the problem by automating reauthentication, using Playwright to drive Burp Suite's built-in Chromium browser through the recorded login sequence and a user-provided starting URL. From there, it follows the required redirects through the Entra ID flow, lands back on the application, and ensures the resulting traffic passes through Burp's proxy.
+                        </p>
+                        <p>
+                            This means Burp sees the authenticated traffic and updates its own cookie jar so stale cookies can be replaced with fresh ones during the scan.
+                        </p>
+
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Technical Workflow</h2>
+                        <p>
+                           The workflow looks like this:
+                        </p>
+
+<pre><code class="language-text">1. The user provides a starting URL and Burp recorded login sequence.
+2. The extension launches Burp's Chromium browser through Playwright.
+3. The automated browser follows the application's Entra ID authentication flow.
+4. The last steps in the flow result in 
+   4.1 The browser follows a redirection to the application authentication endpoint where session cookies are set 
+   4.2 The browser follows a redirection to the application landing page.
+5. The traffic is sent through Burp's proxy.
+6. Burp observes the new authenticated traffic and updates its cookie jar.
+7. Future audit requests can use the refreshed session cookies instead of stale ones.</code></pre>
+
+                        <p>
+                            To make that work, the extension attempts to identify Burp's Chromium browser path and active listening port automatically, while still allowing the user to configure either value manually when the automatic choice is wrong.
+                        </p>
+                        <p>
+                            Burp still handles the proxy, cookie jar, and scanning. EntraKeeper simply renews authenticated state.
+                        </p>
+
+                    </section>
+
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Tradeoffs and Current Limitations</h2>
+                        <p>
+                            The current version runs on a user-configurable timer. That works . . . Kind-of.
+                        </p>
+                        <p>
+                            Refreshing on a schedule rather than when the session is actually no longer valid means it can fail to renew on time, or renew earlier than necessary, and in some applications that can create its own problems. If the login sequence doesn't also result in fresh XSRF tokens or other session-bound values, forcing a refresh too early can cause requests to fail sooner instead of later.
+                        </p>
+                        <p>
+                            There are also environment-specific limitations. Automatically selecting Burp's active listener port works for straightforward setups, but it can be wrong when Burp is listening on more than one port. The current implementation is also focused on cookie-based session renewal and hasn't been tested against other modern authentication providers.
+                        </p>
+                        <p>
+                            So the extension solves the immediate problem, but it doesn't pretend to solve every version of it yet.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Planned Improvements</h2>
+                        <p>
+                            The next major improvement is to move away from a timer-only model.
+                        </p>
+                        <p>
+                            A better approach is to use Burp's Montoya API <code class="inline-code">HTTPHandler</code> method to detect when authenticated state has actually been lost. Instead of refreshing on a fixed schedule, the extension can watch for redirects back to login or other response patterns that suggest the session is no longer valid. Another option I plan to implement is inspired by Invicti's implementation of form based authentication, user-defined keyword detection, where the tester provides response text that signals logout, timeout, or forced reauthentication.
+                        </p>
+                        <p>
+                            A future version will also support bearer tokens and other session-tied headers. The plan is to let the user define a comma-separated list of headers that should be tracked alongside cookies. That may require allowing the user to send multiple URLs to the extension for different session related purposes so the extension can reauthenticate, reach the right endpoint, and capture fresh token-bearing requests or headers.
+                        </p>
+                        <p>
+                            It also needs testing against other identity providers such as Okta.
+                        </p>
+                    </section>
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Autovader Influence</h2>
+                        <p>
+                            This project wouldn't have been written without the Autovader extension.
+                        </p>
+                        <p>
+                            Autovader already solved the problem of launching and automating Burp Suite's built-in browser with Playwright. That work directly inspired EntraKeeper and provided the model for browser launching, browser-driven navigation, and automatic discovery of the Burp Chromium browser path with a manual fallback when discovery fails.
+                        </p>
+                    </section>
+
+
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="wrapper style1">
+        <div class="inner">
+            <ul class="menu">
+                <li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+                <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                <li><a href="index.html#four">[Security Tooling]</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+    <!-- highlight.js -->
+    <script src="assets/js/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.hljs) {
+                if (typeof hljs.highlightAll === 'function') {
+                    hljs.highlightAll();
+                } else {
+                    document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
+                }
+            }
+        });
+    </script>
+    <script src="assets/js/custom-hljs.js"></script>
+</body>
+</html>
