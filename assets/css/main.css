@@ -1,4 +1,4 @@
-﻿@import url(fontawesome-all.min.css);
+@import url(fontawesome-all.min.css);
 
 /*
 	Hyperspace by HTML5 UP
@@ -4236,6 +4236,7 @@ p {
 .button.primary {
 	background: var(--accent);
 	border-color: var(--accent);
+
 }
 
 	.button.primary:hover {
@@ -4376,9 +4377,15 @@ hr {
 .button {
 	background: rgba(255,255,255,0.02);
 	border: 1px solid rgba(143,131,255,0.35);
-	
 	box-shadow: 0 6px 18px rgba(0,0,0,0.25);
 	transition: all 0.18s ease;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	/* Sizing Constraints */
+	max-width: 100%; /* Or use 100% to fit the parent container */
+	width: 100%; /* Forces the button to occupy available space */
+	
 }
 
 
