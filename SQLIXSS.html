@@ -6,21 +6,19 @@
 -->
 <html>
 <head>
-    <title>Hashcat Emulation in Python</title>
+    <title>SQLi Leading to XSS</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 
-    <link rel="stylesheet" href="assets/css/main.css?v=202548asdf-2" />
-
+    <link rel="stylesheet" href="assets/css/main.css?" />
     <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 
     <!-- highlight.js theme -->
     <link rel="stylesheet" href="styles/a11y-dark.css" />
 
-    <!-- project css-->
-    <link rel="stylesheet" href="assets/css/project-page.css">
+    <!-- project css -->
+    <link rel="stylesheet" href="assets/css/project-page.css" />
 </head>
-
 <body class="is-preload">
 
     <!-- Header -->
@@ -28,7 +26,7 @@
         <a href="index.html" class="title">[Bernard]</a>
         <nav>
             <ul>
-                <li><a href="index.html#four">[Security Tooling]</a></li>
+                <li><a href="index.html#two">[Security Research]</a></li>
             </ul>
         </nav>
     </header>
@@ -40,141 +38,322 @@
         <section id="main" class="wrapper">
             <div class="inner project-page">
 
-                <h1 class="major align-center">A Password Hash Cracker in Python<span class="subtitle">Emulating Dictionary Attack Concepts Inspiration by Hashcat</span></h1>
+                <h1 class="major align-center">
+                    SQL Injection Leading to XSS
+                    <span class="subtitle">How a Server-Side Injection Exposed a Client-Side Execution Path</span>
+                </h1>
 
-                <figure class="project-hero hero-medium hero-overlay">
-                    <img src="images/hashcrack.jpg" alt="Hash cracker banner image">
-                    <figcaption>&copy; No rights reserved. Image created by Google's Gemini.</figcaption>
+                <figure class="project-hero hero-large hero-overlay">
+                    <img src="images/SQLiplus1_1.png" alt="Crevice Testbed emulation of SQL injection leading to script-context XSS" />
+                    <figcaption style="font-size: 13px">
+                        Figure 1. Crevice Testbed emulation of a production finding where successful SQL injection exposed a script-context XSS sink
+                    </figcaption>
                 </figure>
 
-
                 <div class="project-tags visually-hidden">
-                    <span class="tag">Python</span>
-                    <span class="tag">Hashcat</span>
-                    <span class="tag">Hashing</span>
-                    <span class="tag">CLI Tooling</span>
-                    <span class="tag">Password Cracking</span>
-                    <span class="tag">Dictionary Attack</span>
-                    <span class="tag">Cybersecurity Tool</span>
-                    <span class="tag">MD5</span>
-                    <span class="tag">SHA</span>
-
-
-                    <ul class="actions small">
-                        <!-- Optional: enable when you have links -->
-                        <!-- <li><a class="button small primary" href="https://github.com/USER/REPO">GitHub</a></li> -->
-                        <!-- <li><a class="button small" href="index.html#one">Back</a></li> -->
-                    </ul>
+                    <span class="tag">SQL Injection</span>
+                    <span class="tag">Cross-Site Scripting</span>
+                    <span class="tag">Script Context XSS</span>
+                    <span class="tag">Application Security Testing</span>
+                    <span class="tag">Crevice Testbed</span>
                 </div>
 
                 <div class="project-writeup">
+
                     <section class="writeup-block">
                         <h2 class="writeup-title">Summary</h2>
                         <p class="writeup-lede">
-                            I wrote this Python project to enhance my understanding of the mechanics behind how dictionary-based password cracking tools work at a basic level and to strengthen my scripting skills, 
-                            translating that understanding into working code. The script accepts a user-selected hash type, a dictionary file of candidate passwords, and a file of hashes to crack. It then hashes each candidate
-                            password and compares the result against the supplied hash values, returning any matches it finds.
-                        </p>
-                    </section>
-
-                    <section class="writeup-block">
-                        <h2 class="writeup-title">How It Works</h2>
+                            While testing an application, I found that a SQL injection vulnerability exposed a conditionally reachable Cross-Site Scripting (XSS) sink.
+                            The application rendered a client-side <code class="inline-code">&lt;script&gt;</code> only after a query returned a non-empty result set. When that condition was satisfied, it embedded
+                            the original search input into an inline <code class="inline-code">&lt;script&gt;</code> element without proper encoding or sanitization.
+                        </p><p></p>
                         <p>
-                            The implementation models the core workflow of a dictionary attack. A candidate password is read from the wordlist, hashed with the selected algorithm, and 
-                            then compared against each target hash in the supplied hash file. This process repeats until the wordlist has been exhausted. The script currently supports 
-                            MD5, SHA-1, SHA-224, SHA-256, and SHA-512 via Python’s <i>hashlib</i> library.
+                            Exploitation required control over both the server-side query and the client-side execution context. If the search input
+                            produced invalid SQL or the query returned no rows, the application didn't render the vulnerable script element. A working payload
+                            had to produce valid SQL, cause the query to return true, preserve the injected input, and then break out of the script element.
+                        </p>
+                        <p>
+                            This behavior was later emulated in my intentionally vulnerable webapp, <a href="https://github.com/itnasb/CreviceTestbed"><em>Crevice Testbed</em></a>.
                         </p>
                     </section>
 
                     <section class="writeup-block">
-                        <h2 class="writeup-title">Design Decisions</h2>
-                        <ul class="writeup-bullets">
-                            <li>The wordlist is processed one line at a time instead of being loaded into memory all at once.</li>
-                            <li>This keeps memory usage low and makes the script more practical for large dictionaries.</li>
-                            <li>The hash file pointer is reset after each pass so every candidate password is compared against the full set of target hashes.</li>
-                            <li>The implementation prioritizes understanding the cracking workflow over performance optimizations such as parallel processing or indexed hash lookups.</li>
-                        </ul>
+                        <h2 class="writeup-title">Discovery</h2>
+                        <p>
+                            This issue wasn't identified through automated scan findings. While reviewing scan logs, I noticed that one request had returned a
+                            <strong>500 Internal Server Error</strong>. The scanner hadn't reported the response as a vulnerability, but the anomalous server
+                            error piqued my curiosity and inspired me to take a closer look.
+                        </p>
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/SQLiplus1_4.png" alt="Image of the HTTP 500 response rendered in a browser" />
+                            <figcaption style="font-size: 13px">
+                                Figure 2. The HTTP 500 response rendered in a browser
+                            </figcaption>
+                        </figure>
+                        <p>
+                            An injected single quote <code class="inline-code">'</code> caused a syntax error,
+                            which indicated that the application might be incorporating user input directly into a SQL query. I reproduced the syntax errors, finding that <code class="inline-code">''</code>
+                            restored syntax and prevented errors from occuring, providing additiional evidence of a SQL injection vulnerability.
+                        </p>
+                        <figure class="project-hero hero-large hero-overlay">
+                            <img src="images/sqliplus1_5.png" alt="Image of the app rendering properly by injecting a closing single quote" />
+                            <figcaption style="font-size: 13px">
+                                Figure 7. The app renders properly by injecting a closing single quote
+                            </figcaption>
+                        </figure>
+                        <p>
+                            I refined the payloads until
+                            I obtained a working proof of concept that returned the SQL server's version. At that point, the issue appeared to be a standard error-message based SQL injection.
+                        </p>
+                        <figure class="project-hero hero-large hero-overlay">
+                            <img src="images/SQLiplus1_6.png" alt="Image of successful SQL injection generating an error response that returns database version information" />
+                            <figcaption style="font-size: 13px">
+                                Figure 4. Successful SQLi generating an error response that returns database version information
+                            </figcaption>
+                        </figure>
+
+                        <p>
+                            While developing a demonstration of impact, I tested both malformed SQL and valid SQL that changed the query's behavior. An injection that evaluated to true caused the application
+                            to follow a different execution path and build a client-side table.
+                        </p>
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/SQLiplus1_3.png" alt="Image of the rendered table as the result of a successful query" />
+                            <figcaption style="font-size: 13px">
+                                Figure 3. The rendered table as the result of a successful query
+                            </figcaption>
+                        </figure>
+                        <p>
+                            During this process, I found that the application reflected my original input inside an inline
+                            <code class="inline-code">&lt;script&gt;</code> element without proper encoding or sanitization. The input became part of a
+                            JavaScript object used in building the table. If the SQL injection didn't produce a non-empty result
+                            set or evaluate to true, the application never reached the XSS sink in the code path.
+                        </p>
                     </section>
 
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">The Vulnerable Behavior</h2>
+                        <p>
+                            The following code represents the behavior reproduced in Crevice Testbed. In the original application,
+                            user input was incorporated directly into a SQL query:
+                        </p>
+
+<pre><code class="language-sql">WHERE responder_name LIKE '$search_term'</code></pre>
+
+                        <p>
+                            Because this input wasn't sanitized, it was possible to manipulate query behavior and control
+                            whether the application returned results.
+                        </p>
+                        <p>
+                            When the query succeeds and returns data, the application embeds the search term in a JavaScript configuration object:
+                        </p>
+
+<pre><code class="language-javascript">var TableOptions = {
+  searchTerm: 'ENCODED_INPUT',
+  title: 'Search Results for: ' + 'RAW_INPUT'
+};</code></pre>
+
+                        <p>
+                            The browser then uses this object to construct the results table. Although <code class="inline-code">searchTerm</code> contains encoded input, <code class="inline-code">title</code> contains the raw input.
+                        </p>
+
+                        <p>
+                            The application only renders the table when the query has executed and returned at least one row. The emulation uses the following condition:
+                        </p>
+
+<pre><code class="language-php">if ($search_executed && !empty($rows))</code></pre>
+
+                        <p>
+                            This condition means the XSS sink is only reachable if the SQL injection produces a result that satisfies the above check.
+                        </p>
+                        <p>
+                            The original application passed user-controlled data to a third-party table renderer. The library rendered data supplied by the application
+                            and relied on the caller to provide input that was safe for its output context. The vulnerability occured because the application placed raw
+                            user input directly into an executable script context, allowing the input to escape the intended structure and execute JavaScript.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Exploitation</h2>
+                        <p class="writeup-lede">
+                            A working payload had to meet both server-side and client-side constraints.
+                        </p>
+                        <ul class="writeup-bullets">
+                            <li>Produce valid SQL</li>
+                            <li>Return at least one row-- <i>true</i> counts</li>
+                            <li>Preserve control over the injected input</li>
+                        </ul><br />
+                        <p>
+                            Payloads that broke SQL syntax or returned no rows prevented the application from rendering the vulnerable script element.
+                            Once a payload satisfied these conditions, the application rendered the inline script as long as it lived within a SQL comment.
+                        </p>
+                        <p>
+                            The following payload achieved JavaScript execution:
+                        </p>
+
+<pre><code class="language-html">'or 1=1-- &lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>
+
+                        <p class="writeup-lede">
+                            This payload:
+                        </p>
+                        <ul class="writeup-bullets">
+                            <li>provides a SQLi that always resolves to true</li>
+                            <li>comments out the rest of the original SQL query</li>
+                            <li>terminates the existing script element</li>
+                            <li>injects a new script element</li>
+                            <li>executes arbitrary JavaScript</li>
+                        </ul>
+                        <p></p>
+                        <p>
+                            Directly injecting JavaScript into the existing script context appears unviable.
+                            The payload first has to satisfy the SQL injection requirements and the single quote <code class="inline-code">'</code> used to break
+                            out of the string context and introduce the SQLi also terminates the string in the original JavaScript.
+                            The result is that <strong>OR</strong> in <code class="inline-code">or 1=1--</code> is interpreted as javascript. Because <code class="inline-code">or</code>
+                            is not a defined variable or operator in this context, it causes a syntax error that I was unable to resolve.
+                        </p>
+                        <figure class="project-hero hero-large hero-overlay">
+                            <img src="images/SQLiplus1_7.png" alt="JavaScript error caused by a SQL injection" />
+                            <figcaption style="font-size: 13px">
+                                Figure 5. A JavaScript error is caused by the SQL injection syntax
+                            </figcaption>
+                        </figure>
+                        <p>
+                            As a result, the payload terminates the existing <code class="inline-code">&lt;script&gt;</code> element
+                            and injects a new one, ensuring execution occurs in a clean JavaScript context.
+                        </p>
+                        <figure class="project-hero hero-medium hero-overlay">
+                            <img src="images/SQLiplus1_12.png" alt="Image of the HTML and JavaScript resulting from the successful compound injection" />
+                            <figcaption style="font-size: 13px">
+                                Figure 6. The HTML and JavaScript resulting from the successful compound injection
+                            </figcaption>
+                        </figure>
+                        <p>
+                            A carefully constructed payload may be able to satisfy both SQL
+                            and JavaScript constraints simultaneously, but I wasn't able to identify one.
+                        </p>
+                        <figure class="project-hero hero-large hero-overlay">
+                            <img src="images/SQLiplus1_13.png" alt="Image of a failed XSS attempt due to the SQL query returning false" />
+                            <figcaption style="font-size: 13px">
+                                Figure 8. A failed XSS attempt due to the SQL query returning false
+                            </figcaption>
+                        </figure>
+                    </section>
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Automated Testing Missed the Issues</h2>
+                        <p>
+                            The SQLi vulnerability wasn't identified during automated scanning due to assumptions about scan configuration.
+                        </p>
+                        <p>
+                            I had an expectation that SQL injection testing was performed in the scan profile in use, but it wasn't.
+                            The vulnerability almost certainly would have been identified if the intended testing had been enabled.
+                            The database error was a strong indicator, and basic manipulation of the quote syntax confirmed that user input affected the query structure.
+                        </p>
+                        <p>
+                            This gap demonstrates why teams must verify that scan configuration matches the coverage they expect.
+                            Testing scope should reflect the organization's threat model and risk priorities. That requires understanding what
+                            each scan profile tests, reviewing the policies and assumptions behind the configuration, and confirming its actual behavior.
+                        </p>
+                        <p>
+                            The downstream XSS was less likely to be detected automatically because the vulnerable response existed only after a successful SQL injection returned
+                            a non-empty result set or evaluated to true. A scanner testing the unmodified request would never receive a response containing the vulnerable script
+                            context and have no opportunity to test that context for XSS.
+                        </p>
+                        <p>
+                            Fully exploiting the issue required a compound payload that satisfied the SQL query and then broke out of the script element.
+                            DAST tooling generally tests common vulnerability patterns and doesn't generate payloads for every uncommon or application-specific interaction.
+                            A scanner might identify the SQL injection but would leave the dependent XSS unobserved.
+                        </p>
+                        <p>
+                            If a scan were run against a request that already contained the SQL injection needed to reach the vulnerable response, the scanner may then identify the XSS issue.
+                        </p>
+                        <p>
+                            A static analysis tool would be more likely to identify the underlying client-side issue. By tracing user-controlled input from the backend request into an executable
+                            JavaScript context, a SAST tool might flag the untrusted data as a potential XSS condition even without first satisfying the runtime query constraint.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Prevention</h2>
+                        <p>
+                            The server-side injection should be prevented by keeping user input out of SQL syntax using parameterization rather than concatenating <code class="inline-code">$search_term</code>
+                            into the query. Invalid database input should also be handled without returning detailed SQL errors to the client.
+                        </p>
+                        <p>
+                            The XSS issue requires output handling appropriate to the destination context. Any user-controlled value embedded in a JavaScript string or inline
+                            <code class="inline-code">&lt;script&gt;</code> element needs to be encoded, escaped, or sanitized for that context before rendering rather than assuming 
+                            that a third-party renderer will make raw input safe.
+                        </p>
+                        <p>
+                            These controls should be applied to values read from the database as well as values taken directly from the current request. Data does not become trusted 
+                            merely because it came from an administrative or internal interface.
+                        </p>
+                        <p>
+                            Testing controls should also verify, rather than assume, the vulnerability classes enabled in each scan profile. For this application, that verification would have exposed the missing SQL injection coverage.
+                        </p>
+                    </section>
+                 <!--   <section class="writeup-block">
+                        <h2 class="writeup-title">Lessons for Security Analysts and Researchers</h2>
+                        <p>
+                            The most useful lesson from this finding is that exploitability is often conditional.
+                        </p>
+                        <ul class="writeup-bullets">
+                            <li><strong>Vulnerabilities can be conditional.</strong> Not all injection points are immediately exploitable. Application state can determine whether a sink is reachable.</li>
+                            <li><strong>Chaining matters.</strong> The most impactful vulnerabilities often arise from combining multiple issues.</li>
+                            <li><strong>Client-side code assumes trust.</strong> Rendering logic frequently assumes upstream validation has occurred.</li>
+                            <li><strong>Tooling requires verification.</strong> Security tools are only effective when their coverage is fully understood.</li>
+                        </ul>
+
+                    </section>-->
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Practice and Emulation</h2>
+                        <p class="writeup-lede">
+                            I recreated the vulnerabile behavior in
+                            <a href="https://github.com/itnasb/CreviceTestbed"><em>Crevice Testbed</em></a>, my intentionally vulnerable web application. 
+                        </P><br />
+                        <p class="writeup-lede">
+                            The lab guides testers through: 
+                        </p>
+                        <ul class="writeup-bullets">
+                            <li>identifying SQL injection through error responses</li>
+                            <li>understanding how query behavior affects application state</li>
+                            <li>recognizing conditional rendering of client-side code</li>
+                            <li>chaining server-side and client-side injection to achieve JavaScript execution</li>
+                        </ul><br />
+                             <p>
+                                 The exercise is intended to develop manual application-analysis skills, including the ability to follow a value across server-side and client-side contexts, 
+                                 rather than relying only on automated findings.
+                             </p>
+                    </section>
+
+                    <figure class="project-hero hero-medium hero-overlay">
+                        <img src="images/SQLiplus1_11.png" alt="Image of broken application rendering resulting from the successful compound injection in Crevice Testbed" />
+                        <figcaption style="font-size: 13px">
+                            Figure 9. Broken application rendering resulting from the successful compound injection in Crevice
+                        </figcaption>
+                    </figure>
 
                     <section class="writeup-block callout">
-                        <h2 class="writeup-title">Future Improvements</h2>
+                        <h2 class="writeup-title">Final Note: Stored XSS Path</h2>
                         <p>
-                            Some basic input validation is already present, such as restricting supported hash type values, but there is still room to improve file validation, argument handling, and comparison logic.
-                            Professional tools like Hashcat rely heavily on acceleration via GPU parallelism to performing large numbers of hash computations simultaneously. I would like to experiment with GPU 
-                            acceleration via one of the available python libraries. 
+                            In the observed path, the application had to receive a successful SQL injection before it rendered the raw search input. The same unsafe script context 
+                            could also support stored XSS if another interface allowed an attacker to write controlled data to the underlying dataset.
+                        </p>
+
+                        <p>
+                            One <a href="https://github.com/itnasb/CreviceTestbed">Crevice Testbed</a> Broken Access Control lab includes an administrative interface that inserts data into this dataset. In that scenario, a malicious insider 
+                            who bypasses access controls could store a payload that executes when the application later renders it in the vulnerable context.
+                        </p>
+
+                        <p>
+                            This highlights a common and risky assumption: that certain inputs are “trusted” because they originate from administrative or internal interfaces. In practice, access control weaknesses or insider threats can invalidate that assumption.
+                        </p>
+
+                        <p>
+                            A more reliable approach is to treat all input as untrusted and ensure it is properly encoded or sanitized for the context in which it is rendered. Even inputs that don't appear to be user-controllable can become attacker-controlled under the right conditions.
                         </p>
                     </section>
 
-                    <section class="writeup-block">
-                        <h2 class="writeup-title">Python Implementation</h2>
-                        <p class="writeup-hint">
-                            Below is the Python implementation with inline comments describing the file handling, algorithm selection, and comparison logic used to emulate a dictionary-based password hash cracking workflow.
-                        </p>
-                    </section>
                 </div>
-
-
-                <div class="code-card">
-                    <pre class="highlight"><code class="language-python">
-#This script cracks MD5 and the SHA family of hashes. It accepts a number that represents the SHA hash type, a file that is a
-#dictionary of potential passwords and a file of password hashes to be cracked. It then hashes the potential passwords
-#in the dictionary file and compares them to the hashes found in the file containing passwords to crack. If a match
-#is found it returns the matches to the user. I avoid reading the entire potential password file into a list to manage
-#memory more efficiently in cases of very large files like the rockyou password file. Some input validation is
-#implemented, but future work will implement more/better input validation to practice more secure coding.
-
-import sys
-#import os.path # this will eventually be used to check that file arguments are correct os.path.exists(path) returns true/false
-import hashlib
-
-
-def getfile(z):    #reading the files in, but only one line at a time rather than into a list
-    #if os.path.isfile(z[2]):
-    with open(z[3]) as wordlist, open(z[2]) as hashes: # open the wordlist file and the file of hashes to crack
-        hashchoice = z[1]
-        notsupported = "That hashtype isn't supported yet"
-        if int(hashchoice) > 4:
-            return notsupported
-        else:
-            return process(hashes, wordlist, hashchoice) #passing files to process()
-
-
-def process(hashes, wordlist, htype):
-    hashtypes = []
-    # hashalgorithms allows to choose hash type from command line and use hashlib
-    # chosen by selecting 0-4 as first option passed to program
-    hashalgorithms = [hashlib.md5, hashlib.sha1, hashlib.sha224, hashlib.sha256, hashlib.sha512]
-    hashtype = int(htype)
-    result = []
-    hashed = ""
-
-    for wordsrow in wordlist: # runs through each word in wordlist then compares hashed value to user provided hashes
-        for hashrow in hashes:
-            hashed = hashalgorithms[hashtype](wordsrow.encode()).hexdigest() #hashes word from wordlist and stores hash
-            if hashed in hashrow: # compares hashed word to list of hashes provided
-                #appends the matching password and hash to list for printing later
-                result.append([hashed, wordsrow])   # could use rstrip() to remove \n chars, but if password has blank
-                                                    # space, would remove that too
-        hashes.seek(0)          #seeks the start of the provided hashes file
-
-    return result
-
-
-#begin program and get the final values in order to print them
-crackedpass = getfile(sys.argv) #sending the command line arguments to getfile()
-print("\n")
-if isinstance(crackedpass[0], list):
-    for x in crackedpass:
-        print('Password is: ', x[0], ":", x[1])  #printing returned values
-#this else should never get hit. Should be able to remove the if else statement and just print in the loop. 
-#if there is only one line, it will only print one line, if there are many, it will print many. 
-#check if this is true.
-else:
-    print(crackedpass)
-</code></pre>
-                </div>
-
             </div>
         </section>
 
@@ -184,9 +363,10 @@ else:
     <footer id="footer" class="wrapper style1">
         <div class="inner">
             <ul class="menu">
-                <li>&copy; Bernard. All rights reserved.</li>
+                <li>&copy; Bernard Santillan 2026. All rights reserved.</li>
                 <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-                <li><a href="index.html#four">[Security Tooling]</a></li>
+                <li><a href="index.html#two">[Security Research]</a></li>
+                <li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
             </ul>
         </div>
     </footer>
@@ -213,6 +393,6 @@ else:
             }
         });
     </script>
-
+    <script src="assets/js/custom-hljs.js"></script>
 </body>
 </html>
