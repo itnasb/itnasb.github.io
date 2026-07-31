@@ -62,14 +62,21 @@
 
 
 				<div class="project-writeup">
-					<!-- TEMPLATE NOTE:
-						Replace the placeholder text below with your real project writeup.
-						Delete any sections you don't need.
-					-->
+
+					<section class="writeup-block callout">
+
+						<p style="font-size: 16px;">
+							<i>
+								Note: I reported this issue to Burp Suite and was told to make a Bcheck for it. I assumed they didn't plan to fix it but later ran a scan on <a href="https://github.com/itnasb/CreviceTestbed"><em>Crevice Testbed</em></a>
+								and found that the issue is now correctly identified in scans, eliminating the need for a Bcheck. Once I tested the Bcheck against a known vulnerable app and found that while it is syntactically correct, it didn't work.
+								I vibecoded a Bambda to check for this as I originally envisioned and it does work, but I won't bother publishing it since it's no longer needed. This writeup is left here to archive my work.
+							</i>
+						</p>
+					</section>
 					<section class="writeup-block">
 						<h2 class="writeup-title">Summary</h2>
 						<p class="writeup-lede">
-							
+
 							Burp Suite Professional often misses reflected XSS when user input is injected into an existing &lt;textarea&gt; because tags inside a textarea are treated as text.
 							This BCheck detects that scenario by injecting a closing &lt;/textarea&gt; marker followed by multiple XSS payloads and confirming reflection into a context where HTML is parsed.
 						</p>
@@ -81,8 +88,8 @@
 
 							Developers sometimes assume textarea content is safe because the browser renders tags inside &lt;textarea&gt; as literal text.
 							If the application reflects input without proper HTML entity encoding, an attacker can break out using &lt;/textarea&gt; and the browser resumes normal HTML parsing, enabling script execution.
-							The scanner assumes that content reflected inside a &lt;textarea&gt; element is non-executable and therefore does not generate payloads that break out of that context. As a result, 
-                            it fails to test for the possibility that attacker-controlled input can prematurely terminate the textarea element and introduce HTML tags containing arbitrary JavaScript.
+							The scanner assumes that content reflected inside a &lt;textarea&gt; element is non-executable and therefore does not generate payloads that break out of that context. As a result,
+							it fails to test for the possibility that attacker-controlled input can prematurely terminate the textarea element and introduce HTML tags containing arbitrary JavaScript.
 						</p>
 					</section>
 
@@ -99,7 +106,7 @@
 					<section class="writeup-block callout">
 						<h2 class="writeup-title">Demonstration Lab</h2>
 						<p>
-							
+
 							This check is paired with an intentionally vulnerable training endpoint so analysts can practice identifying textarea breakout reflections that automated scanners often miss.
 						</p>
 					</section>
@@ -107,7 +114,7 @@
 					<section class="writeup-block">
 						<h2 class="writeup-title">BCheck Implementation</h2>
 						<p class="writeup-hint">
-							
+
 							Below is the compact BCheck implementation with inline comments explaining the detection logic.
 						</p>
 					</section>
