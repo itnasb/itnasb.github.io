@@ -6,7 +6,7 @@
 -->
 <html>
 <head>
-    <title>Unicode Best-Fit XSS Bypass | Bernard Santillan</title>
+    <title>Unicode Best-Fit XSS Bypass</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 
@@ -27,7 +27,7 @@
         <a href="index.html" class="title">[Bernard]</a>
         <nav>
             <ul>
-                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+                <li><a href="index.html#one">[Appsec Training Labs]</a></li>
             </ul>
         </nav>
     </header>
@@ -180,7 +180,6 @@
                         <p>
                             The root problem isn’t just that legacy request validation missed a few Unicode tricks. The deeper problem is that the application trusted input validation to carry the full security burden for HTML rendering.
                         </p>
-                        <p>That's not enough.</p>
                         <p>
                             It's useful for validation to reject known-bad patterns. But validation is always operating on a guess about what dangerous input will look like at the moment it inspects it, and better used for business logic than security. Once later processing changes the data through normalization, transformation, decoding, or storage behavior, that guess can become wrong very quickly.
                         </p>
@@ -280,7 +279,7 @@
             <ul class="menu">
                 <li>&copy; Bernard Santillan 2026. All rights reserved.</li>
                 <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-                <li><a href="index.html#one">[Crevice Testbed]</a></li>
+                <li><a href="index.html#one">[Appsec Training Labs]</a></li>
                 <li><a href="https://github.com/itnasb/CreviceTestbed">https://github.com/itnasb/CreviceTestbed</a></li>
             </ul>
         </div>
