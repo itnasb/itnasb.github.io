@@ -1,0 +1,225 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+    <title>VBA Automation2</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel="stylesheet" href="assets/css/main.css?v=2025sdsd48-2" />
+
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+    <!-- highlight.js theme -->
+    <link rel="stylesheet" href="styles/a11y-dark.css" />
+
+    <!-- project css-->
+    <link rel="stylesheet" href="assets/css/project-page.css">
+</head>
+<body class="is-preload">
+
+    <!-- Header -->
+    <header id="header">
+        <a href="index.html" class="title">[Bernard]</a>
+        <nav>
+            <ul>
+                <li><a href="index.html#four">[Security Tooling]</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Main -->
+        <section id="main" class="wrapper">
+            <div class="inner project-page">
+                <h1 class="major align-center">Automating Workflows</h1>
+                <figure class="project-hero hero-medium hero-overlay">
+                    <img src="images/workflow1a.jpg" style="max-width:600px;" />
+                    <figcaption> &copy; No rights reserved. Image created by Google's Gemini.</figcaption>
+                </figure>
+
+                <!-- Optional hidden tags for crawlers (no visual space) -->
+                <div class="project-tags visually-hidden">
+                    <span class="tag">Visual Basic for Applications</span>
+                    <span class="tag">VBA</span>
+                    <span class="tag">Automation</span>
+                </div>
+
+                <div class="project-writeup">
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Summary</h2>
+                        <p class="writeup-lede">
+                            This VBA macro automates the review of inventory records to identify entries that may require follow-up or additional tracking.
+                            It analyzes fields in spreadsheet data, and applies rule-based checks with the goal of reducing the amount of manual effort required to review large spreadsheets by
+                            filtering out entries not requiring action and highlighting those that may.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">How It Works</h2>
+                        <p>
+                            The macro loops through rows in source worksheets and inspects key fields.
+                            Based on these values, the script determines whether the row should be hidden, highlighted for manual review, or left visible for follow-up.
+                        </p>
+                        <p>
+                            Each record ID is also compared against a separate tracking worksheet. If the record already exists and has
+                            not changed, the row is hidden. If the record exists but the description has changed, the script updates the tracking sheet 
+                            and marks the update for visibility. Records that don't yet exist in the tracking list remain visible so they can be added to the review workflow.
+                        </p>
+                    </section>
+
+                    <section class="writeup-block">
+                        <h2 class="writeup-title">Impact</h2>
+                        <p>
+                            This approach turns a large spreadsheet review task into a much smaller, prioritized list of items that actually require attention.
+                        </p>
+                    </section>
+                </div>
+                <div class="code-card">
+                    <pre class="highlight pre-shadow"><code class="language-vbnet">
+' This VBA macro reviews source worksheets to determine whether
+' records require follow-up, should be suppressed from review, or need to
+' update an existing entry in a tracking worksheet.
+
+Sub EvaluateSourceSheetA()
+
+Dim rowIndex As Long, recordIdMatch As Variant, statusMatch As Variant
+
+' Using the worksheet by name rather than sheet index
+With Worksheets("SourceSheetA")
+
+    'loop through rows containing record identifiers
+    For rowIndex = 7 To .Cells(.Rows.Count, "A").End(xlUp).Row
+
+        ' If column AB does not contain markerA or markerB, hide the row
+        If InStr(1, .Cells(rowIndex, 10).Value2, "MarkerA", vbTextCompare) = 0 _
+        And InStr(1, .Cells(rowIndex, 10).Value2, "MarkerB", vbTextCompare) = 0 Then
+        
+            .Rows(rowIndex).Hidden = True
+
+        ' Else if the classification fields contain exception markers, highlight the row green
+        ElseIf InStr(1, .Cells(rowIndex, 5).Value2, "exceptionFlag", vbTextCompare) > 0 _
+        Or InStr(1, .Cells(rowIndex, 10), "exceptionMarker1", vbTextCompare) > 0 Then
+        
+            .Rows(rowIndex).Interior.ColorIndex = 4
+        
+        End If
+
+        ' Check if record already exists in tracking sheet
+        recordIdMatch = Application.Match(.Cells(rowIndex, "A").Value2, _
+                            Worksheets("TrackingSheet").Columns("E"), 0)
+        ' If a matching identifier is found, compare the description/status
+        If Not IsError(recordIdMatch) Then
+
+            'Check whether description/status has changed
+            statusMatch = Application.Match(.Cells(rowIndex, "D").Value2, Worksheets("TrackingSheet").Cells(recordIdMatch, "I"), 0)
+            ' If the description/status already matches, hide the row
+            If Not IsError(statusMatch) Then
+
+                'No change hide row
+                .Rows(rowIndex).Hidden = True
+
+            Else
+                'Update changed description/status
+                Worksheets("TrackingSheet").Cells(recordIdMatch, "I").Value = .Cells(rowIndex, "D").Value
+                .Rows(rowIndex).Hidden = True
+            End If
+        ' If no matching identifier is found, leave the row visible for follow-up
+        End If
+
+    Next rowIndex
+
+End With
+End Sub
+
+Sub EvaluateSourceSheetB()
+
+'  Hide rows that don't require follow-up based on marker values or exception flags.
+
+Dim rowIndex As Long, recordIdMatch As Variant, statusMatch As Variant
+
+' Using the worksheet by name rather than sheet index
+With Worksheets("SourceSheetB")
+
+    For rowIndex = 7 To .Cells(.Rows.Count, "A").End(xlUp).Row
+
+        'Hide rows meeting exclusion criteria
+        If InStr(1, .Cells(rowIndex, 10).Value2, "MarkerC", vbTextCompare) > 0 _
+        Or InStr(1, .Cells(rowIndex, 5).Value2, "exceptionFlag2", vbTextCompare) > 0 _
+        Or InStr(1, .Cells(rowIndex, 10), "excludeMarker1", vbTextCompare) > 0 Then
+            .Rows(rowIndex).Hidden = True
+        End If
+
+        ' Check if record already exists in tracking sheet
+        recordIdMatch = Application.Match(.Cells(rowIndex, "A").Value2, Worksheets("TrackingSheet").Columns("E"), 0)
+        ' If a matching identifier is found, compare the description/status
+        If Not IsError(recordIdMatch) Then
+            statusMatch = Application.Match(.Cells(rowIndex, "D").Value2, Worksheets("TrackingSheet").Cells(recordIdMatch, "I"), 0)
+            
+            ' If the description/status already matches, hide the row
+            If Not IsError(statusMatch) Then
+                'Record unchanged
+                .Rows(rowIndex).Hidden = True
+
+            Else
+                'Record changed — update tracking sheet
+                Worksheets("TrackingSheet").Cells(recordIdMatch, "I").Value = .Cells(rowIndex, "D").Value
+                Worksheets("TrackingSheet").Cells(recordIdMatch, "I").Interior.ColorIndex = 4
+                .Rows(rowIndex).Hidden = True
+
+            End If
+
+        ' If not in tracking sheet and new records contain review markers
+        ElseIf InStr(1, .Cells(rowIndex, 10), "reviewFlag", vbTextCompare) > 0 Then
+            .Rows(rowIndex).Interior.ColorIndex = 4
+
+        End If
+        ' If the identifier is not in tracking and no review marker is present,
+        ' leave the row visible for follow-up
+    Next rowIndex
+End With
+End Sub
+</code></pre>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="wrapper style1">
+
+        <div class="inner">
+            <ul class="menu">
+                <li>&copy; Bernard Santillan 2026. All rights reserved.</li>
+                <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                <li><a href="index.html#four">[Security Tooling]</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+        });
+    </script>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+</body>
+</html>
